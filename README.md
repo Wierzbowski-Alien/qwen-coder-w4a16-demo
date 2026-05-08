@@ -81,6 +81,17 @@ CUDA 12.4, PyTorch 2.6. Aucune triche de cache L2.
 | **+ P4** | cp.async double-buffering (compute/load overlap) | 65.6 | +22% |
 | **+ A2** | bfe.s32 PTX dequant + 2x unroll | **69.3** | +6% |
 
+## Pistes en cours
+
+Quatre optimisations supplémentaires sont à l'étude :
+
+| Piste | Gain estimé | Statut |
+|-------|------------|--------|
+| **Speculative decoding** — modèle « draft » rapide vérifié par le modèle principal | ×2-3 effectif | En cours |
+| **Layout scales+poids entrelacé** — fusionner metadata FP32 et poids INT4 (1 seule vague DRAM) | +1-3 tok/s | À faire |
+| **Dequant INT4→FP16 via PRMT** — déquantification sans passer par le pipeline INT32 | +2-4 tok/s | Non testé |
+| **Fusion des kernels de réduction** — éliminer les atomics de fin de split | +1-2 tok/s | Non testé |
+
 ## Les trois optimisations
 
 Chaque optimisation est horodatée par un commit git dans le dépôt de
@@ -255,6 +266,17 @@ CUDA 12.4, PyTorch 2.6. No L2 cache tricks.
 | **+ P1** | Block-interleaved layout (100% L1 coalescing) | 53.6 | +45% |
 | **+ P4** | cp.async double-buffering (compute/load overlap) | 65.6 | +22% |
 | **+ A2** | bfe.s32 PTX dequant + 2x unroll | **69.3** | +6% |
+
+## Coming Next
+
+Four additional optimizations under investigation:
+
+| Track | Est. gain | Status |
+|-------|-----------|--------|
+| **Speculative decoding** — fast draft model verified by the main model | ×2-3 effective | In progress |
+| **Interleaved scale+weight layout** — fuse FP32 metadata and INT4 weights (single DRAM wave) | +1-3 tok/s | Planned |
+| **INT4→FP16 dequant via PRMT** — bit-stuffing dequant bypassing the INT32 pipeline | +2-4 tok/s | Not tested |
+| **Reduction kernel fusion** — eliminate end-of-split atomics | +1-2 tok/s | Not tested |
 
 ## The Three Optimizations
 
