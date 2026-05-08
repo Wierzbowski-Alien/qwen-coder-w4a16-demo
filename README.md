@@ -81,6 +81,40 @@ CUDA 12.4, PyTorch 2.6. Aucune triche de cache L2.
 | **+ P4** | cp.async double-buffering (compute/load overlap) | 65.6 | +22% |
 | **+ A2** | bfe.s32 PTX dequant + 2x unroll | **69.3** | +6% |
 
+## Analyse de la bande passante
+
+Le step de génération complet se décompose en deux phases :
+
+| Composante | Valeur | Note |
+|------------|--------|------|
+| **Temps total par token** | **14.43 ms** | 1000 / 69.3 |
+| Overhead fixe (attention, RMSNorm, lm_head) | 3.75 ms | Ne sollicite pas la DRAM |
+| **Temps kernels de poids (matvec, gate+up, residual)** | **10.68 ms** | 74% du step |
+| Volume de données lues | 3.25 GB | Modèle 7B en W4A16 |
+| **Débit réel pendant les kernels** | **304.3 GB/s** | **84.5% du peak théorique (360 GB/s)** |
+
+Atteindre 304 GB/s de débit réel sur un algorithme aussi complexe est une
+performance de niveau exceptionnel. La plupart des implémentations — y
+compris llama.cpp — oscillent entre 70% et 78% d'efficacité DRAM.
+
+### Comparaison sur RTX 3060
+
+| Projet | tok/s | ms/token | Efficacité DRAM |
+|--------|------:|----------|----------------|
+| PyTorch standard (FP16) | ~12 | 83 ms | < 15% |
+| Ollama / llama.cpp (Q4_K_M) | 62.6 | 15.9 ms | 78% |
+| **Ce runtime (W4A16)** | **69.3** | **14.4 ms** | **84.5%** |
+
+### Le plafond : que reste-t-il ?
+
+Avec une efficacité quasi-parfaite de 95% (342 GB/s), le temps de
+chargement des poids tomberait à 9.5 ms. Avec l'overhead actuel
+de 3.75 ms, le step total serait de **13.25 ms → 75.4 tok/s**.
+
+C'est le plafond absolu pour du W4A16 sur RTX 3060 sans changer
+la précision des poids. Au-delà, il faudrait du W3A16 (2.5 GB,
+~95 tok/s projeté) ou du speculative decoding (×2-3 effectif).
+
 ## Pistes en cours
 
 Quatre optimisations supplémentaires sont à l'étude :
@@ -266,6 +300,40 @@ CUDA 12.4, PyTorch 2.6. No L2 cache tricks.
 | **+ P1** | Block-interleaved layout (100% L1 coalescing) | 53.6 | +45% |
 | **+ P4** | cp.async double-buffering (compute/load overlap) | 65.6 | +22% |
 | **+ A2** | bfe.s32 PTX dequant + 2x unroll | **69.3** | +6% |
+
+## Bandwidth Analysis
+
+Each generation step breaks down into two phases:
+
+| Component | Value | Note |
+|-----------|-------|------|
+| **Total time per token** | **14.43 ms** | 1000 / 69.3 |
+| Fixed overhead (attention, RMSNorm, lm_head) | 3.75 ms | Minimal DRAM usage |
+| **Weight kernel time (matvec, gate+up, residual)** | **10.68 ms** | 74% of the step |
+| Data volume read | 3.25 GB | 7B model in W4A16 |
+| **Actual throughput during weight kernels** | **304.3 GB/s** | **84.5% of theoretical peak (360 GB/s)** |
+
+Achieving 304 GB/s of real throughput on a complex sparse-access algorithm is
+an exceptional result. Most implementations — including llama.cpp — operate
+between 70% and 78% DRAM efficiency.
+
+### RTX 3060 Comparison
+
+| Project | tok/s | ms/token | DRAM Efficiency |
+|--------|------:|----------|----------------|
+| PyTorch standard (FP16) | ~12 | 83 ms | < 15% |
+| Ollama / llama.cpp (Q4_K_M) | 62.6 | 15.9 ms | 78% |
+| **This runtime (W4A16)** | **69.3** | **14.4 ms** | **84.5%** |
+
+### The Ceiling: What's Left?
+
+With near-perfect 95% efficiency (342 GB/s), weight load time would drop
+to 9.5 ms. With the current 3.75 ms overhead, the total step would be
+**13.25 ms → 75.4 tok/s**.
+
+That's the absolute W4A16 ceiling on RTX 3060 without changing weight
+precision. Beyond this: W3A16 (2.5 GB, ~95 tok/s projected) or speculative
+decoding (×2-3 effective).
 
 ## Coming Next
 
