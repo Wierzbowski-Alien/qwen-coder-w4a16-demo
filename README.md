@@ -1,7 +1,7 @@
 # DeepSeek-R1 W4A16 · RTX 3060 · 69.3 tok/s
 
-> **One developer + Claude Code. The fastest DeepSeek-R1 on consumer hardware.**
-> *Un développeur + Claude Code. Le DeepSeek-R1 le plus rapide sur GPU grand public.*
+> **One developer + Claude Code, DeepSeek-v4-pro & Gemini. The fastest DeepSeek-R1 on consumer hardware.**
+> *Un développeur + Claude Code, DeepSeek-v4-pro & Gemini. Le DeepSeek-R1 le plus rapide sur GPU grand public.*
 
 ---
 
@@ -37,7 +37,7 @@ a été sculpté pour un **circuit spécifique** : la RTX 3060 12 GB.
 - **llama.cpp** : ~50 mainteneurs principaux, 800+ contributeurs, des années de R&D
 - **vLLM** : développé par UC Berkeley, financé par des millions de dollars de capital-risque
 - **TensorRT-LLM** : l'équipe officielle NVIDIA, accès aux spécifications internes des GPU
-- **Ce runtime** : 1 développeur, Claude Code (DeepSeek-v4-pro), 3 optimisations en 48 heures
+- **Ce runtime** : 1 développeur, Claude Code, DeepSeek-v4-pro, Gemini, 3 optimisations en 48 heures
 
 Le résultat : un GPU à 300 € qui atteint la réactivité d'une station de
 travail professionnelle. **Le DeepSeek-R1 7B le plus rapide du monde sur
@@ -213,7 +213,7 @@ runtime was sculpted for a **single circuit**: the RTX 3060 12 GB.
 - **llama.cpp**: ~50 core maintainers, 800+ contributors, years of R&D
 - **vLLM**: built by UC Berkeley, millions in VC funding
 - **TensorRT-LLM**: NVIDIA's own team, access to internal GPU specs
-- **This runtime**: 1 developer, Claude Code (DeepSeek-v4-pro), 3 optimizations in 48 hours
+- **This runtime**: 1 developer, Claude Code, DeepSeek-v4-pro, Gemini, 3 optimizations in 48 hours
 
 The result: a $300 GPU delivering workstation-class responsiveness.
 **The world's fastest DeepSeek-R1 7B on RTX 3060.**
