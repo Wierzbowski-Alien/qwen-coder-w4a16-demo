@@ -1,0 +1,44 @@
+# DeepSeek-R1 W4A16 INT4 — Licence restrictive
+
+© 2026 — Tous droits réservés.
+
+## Conditions d'utilisation
+
+En utilisant ce logiciel, vous acceptez les conditions suivantes :
+
+### 1. Usage autorisé
+- Usage personnel et non commercial.
+- Recherche académique et évaluation.
+- Démonstration privée.
+
+### 2. Usage interdit
+- Toute utilisation commerciale, intégration dans un produit ou service
+  payant, revente, SaaS, ou monétisation directe ou indirecte sans
+  accord écrit préalable de l'auteur.
+- Redistribution du logiciel, des poids du modèle, ou de toute partie
+  de ce dossier, sous quelque forme que ce soit, sans autorisation
+  explicite.
+
+### 3. Ingénierie inverse interdite
+- La décompilation, le désassemblage, le reverse engineering, l'analyse
+  statique ou dynamique du runtime compilé (`.so`) dans le but d'extraire
+  les techniques d'optimisation est strictement interdit.
+- L'extraction, la conversion ou la réutilisation des poids du modèle
+  (`.pt`) en dehors de ce runtime est interdite.
+
+### 4. Absence de garantie
+CE LOGICIEL EST FOURNI « TEL QUEL », SANS GARANTIE D'AUCUNE SORTE,
+EXPRESSE OU IMPLICITE, Y COMPRIS MAIS SANS S'Y LIMITER LES GARANTIES
+DE QUALITÉ MARCHANDE, D'ADÉQUATION À UN USAGE PARTICULIER ET D'ABSENCE
+DE CONTREFAÇON. EN AUCUN CAS L'AUTEUR NE SERA TENU RESPONSABLE DE TOUT
+DOMMAGE, BLESSURES, RÉCLAMATIONS OU PERTES DÉCOULANT DE L'UTILISATION
+DE CE LOGICIEL.
+
+### 5. Modèle sous-jacent
+Le modèle DeepSeek-R1 est soumis à la licence DeepSeek originale
+(https://github.com/deepseek-ai/DeepSeek-R1). Les poids INT4 inclus
+dans ce dossier sont une œuvre dérivée du modèle original.
+
+### 6. Contact pour licence commerciale
+Pour toute demande de licence commerciale, partenariat, ou adaptation :
+**softlogik@gmail.com**

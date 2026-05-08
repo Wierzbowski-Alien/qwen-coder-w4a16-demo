@@ -1,0 +1,15 @@
+# Poids du modèle (5.3 GB) — à télécharger depuis GitHub Releases
+*.pt
+
+# Runtime CUDA compilé (14 MB) — à télécharger depuis GitHub Releases
+*.so
+
+# Environnement virtuel Python
+venv/
+
+# Cache Python
+__pycache__/
+*.pyc
+
+# Artefacts de build
+build/
