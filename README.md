@@ -430,6 +430,46 @@ Software under **restrictive license**. See `LICENSE`.
 - ❌ Reverse engineering of the `.so`
 - ❌ Redistribution without authorization
 
+## 🔬 Pistes en cours (9 mai 2026)
+
+### Speculative decoding — Modèles Qwen2.5-Coder
+
+Le spec decoding standard (draft 0.5B/1.5B + target 7B) plafonne à **56 tok/s**
+sur RTX 3060 — le coût du draft partage la bande passante mémoire avec le verifier.
+
+| Draft | tok/s | Acceptance |
+|-------|------:|-----------:|
+| Qwen2.5-Coder-0.5B (W4A16) | 56.2 | 46% @K=3 |
+| Qwen2.5-Coder-1.5B (W4A16) | 48.5 | 66% @K=4 |
+
+L'acceptance Coder-Coder est 6-24pp supérieure à Instruct-Instruct (même corpus
+d'entraînement → meilleur alignement), mais le coût du draft séparé empêche de
+battre le solo decode (70.3 tok/s).
+
+**Prochaine étape : EAGLE-2**
+
+Les têtes EAGLE-2 Qwen2-7B (`yuhuili/EAGLE-Qwen2-7B-Instruct`) sont
+architecturalement compatibles avec Qwen2.5-Coder-7B (hidden=3584, vocab=152064).
+Un transformer 1 couche (~200 MB) prédit K tokens depuis les états cachés du
+modèle cible — pas de second modèle en VRAM.
+
+| Approche | Coût draft | Acceptance visée | tok/s projeté |
+|----------|-----------|-----------------|---------------|
+| EAGLE-2 intégré W4A16 | ~0.5 ms | 60-70% | **80-110** |
+
+Étapes :
+1. Test acceptation EAGLE-2 Qwen2-7B → Coder-7B (venv transformers 4.x)
+2. Extraction hidden states depuis les kernels CUDA W4A16
+3. Portage du head EAGLE en CUDA (1 couche + tree attention)
+4. Intégration dans le pipeline verify
+
+### Au-delà
+- **Self-speculation** : early exit du modèle cible (alignement parfait, 0 VRAM additionnelle)
+- **PRMT bit-stuffing** : déquantification INT4→FP16 directe (+2-4 tok/s)
+- **Multi-GPU** : draft sur GPU secondaire ou iGPU
+
+---
+
 © 2026 — All rights reserved.
 
 ## Contact
