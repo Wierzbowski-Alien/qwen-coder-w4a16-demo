@@ -87,16 +87,28 @@ fi
 # --- Python & venv ---
 if [ ! -d "$ROOT/venv" ]; then
     info "Création de l'environnement virtuel Python..."
-    python3 -m venv "$ROOT/venv"
+    python3 -m venv "$ROOT/venv" --system-site-packages
     ok "venv créé"
 fi
 source "$ROOT/venv/bin/activate"
 ok "venv activé"
 
 # --- Dépendances ---
-info "Installation de PyTorch + CUDA 12.4..."
 pip install --upgrade pip --quiet 2>/dev/null
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124 --quiet
+
+if python -c "import torch; assert torch.cuda.is_available()" 2>/dev/null; then
+    TORCH_VER=$(python -c "import torch; print(torch.__version__)")
+    ok "PyTorch $TORCH_VER déjà disponible (CUDA OK)"
+else
+    info "Installation de PyTorch (CUDA)..."
+    pip install torch torchvision torchaudio --quiet
+    if ! python -c "import torch; assert torch.cuda.is_available()" 2>/dev/null; then
+        err "PyTorch installé mais CUDA indisponible. Vérifiez vos pilotes NVIDIA."
+        exit 1
+    fi
+    ok "PyTorch installé"
+fi
+
 pip install transformers tokenizers sentencepiece flask --quiet
 ok "Dépendances installées"
 

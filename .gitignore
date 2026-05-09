@@ -1,5 +1,6 @@
 # Poids du modèle (5.3 GB) — à télécharger depuis GitHub Releases
 *.pt
+*.pt.part*
 
 # Runtime CUDA compilé (14 MB) — à télécharger depuis GitHub Releases
 *.so
