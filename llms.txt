@@ -1,0 +1,23 @@
+# DeepSeek-R1 W4A16 Demo
+
+## Summary
+Highly optimized local implementation of DeepSeek-R1 using W4A16 quantization (Weights 4-bit / Activations 16-bit). Designed for maximum throughput on mid-range NVIDIA GPUs (RTX 3060 12GB) and optimized for the CachyOS environment.
+
+## Key Technical Specifications
+- **Format:** W4A16 (Preserves reasoning CoT while fitting 12GB VRAM)
+- **Baseline Performance:** 70+ TPS on RTX 3060 (Solo inference)
+- **Speculative Performance:** 130+ TPS (Target: DeepSeek-R1-7B | Draft: Qwen2.5-0.5B)
+- **Memory Efficiency:** 84.5% Bus Bandwidth Saturation (Nsight verified)
+- **Context Support:** 32k tokens via INT4 KV Cache optimization
+- **Infrastructure:** Compatible with Nexus Distributed Cluster (10Gbps/2.5Gbps links)
+
+## Use Cases
+- High-speed agentic workflows via OpenClaw
+- Localized AI orchestration (Aynine project)
+- Hard Science fiction writing and technical research
+- Real-time Telegram interaction with TTS/STT (Kokoro-82M integration)
+
+## Author
+Sébastien (Wierzbowski-Alien)
+IT Technician & Network Administrator
+Longueuil (Greenfield Park), Quebec, Canada
