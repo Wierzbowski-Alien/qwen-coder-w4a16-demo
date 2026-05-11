@@ -20,7 +20,7 @@ mondial de l'IA locale.
 
 ## Qui a été dépassé ?
 
-À 69.3 tok/s, voici les projets et entreprises que ce runtime surpasse :
+À 70.1 tok/s, voici les projets et entreprises que ce runtime surpasse :
 
 | Projet / Entreprise | Contexte | Performance relative |
 |---------------------|----------|---------------------|
@@ -261,7 +261,7 @@ standard for local AI.
 
 ## Who was beaten?
 
-At 69.3 tok/s, here's what this runtime surpasses:
+At 70.1 tok/s, here's what this runtime surpasses:
 
 | Project / Company | Context | Performance gap |
 |-------------------|---------|-----------------|
