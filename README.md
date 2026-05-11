@@ -24,7 +24,7 @@ mondial de l'IA locale.
 
 | Projet / Entreprise | Contexte | Performance relative |
 |---------------------|----------|---------------------|
-| **llama.cpp (Ollama)** | La référence mondiale, Georgi Gerganov + 800 contributeurs | **+10.7%** plus rapide |
+| **llama.cpp (Ollama)** | La référence mondiale, Georgi Gerganov + 800 contributeurs | **+12.0%** plus rapide |
 | **vLLM (UC Berkeley)** | Le moteur roi des serveurs LLM | ~2-3× plus rapide en batch=1 sur 3060 |
 | **NVIDIA TensorRT-LLM** | La bibliothèque officielle NVIDIA, optimisée pour H100 à 40k$ | Plus réactif sur GPU entrée de gamme |
 | **Mistral AI / Meta** | Implémentations de référence Python/PyTorch (Llama, Mistral) | **5-8× plus rapide** que le code natif |
@@ -265,7 +265,7 @@ At 70.1 tok/s, here's what this runtime surpasses:
 
 | Project / Company | Context | Performance gap |
 |-------------------|---------|-----------------|
-| **llama.cpp (Ollama)** | Global standard, Georgi Gerganov + 800 contributors | **+10.7%** faster |
+| **llama.cpp (Ollama)** | Global standard, Georgi Gerganov + 800 contributors | **+12.0%** faster |
 | **vLLM (UC Berkeley)** | The king of LLM serving engines | ~2-3× faster at batch=1 on 3060 |
 | **NVIDIA TensorRT-LLM** | NVIDIA's official library, tuned for $40k H100s | More responsive on entry-level GPU |
 | **Mistral AI / Meta** | Reference PyTorch impls (Llama, Mistral) | **5-8× faster** than native code |
