@@ -1,4 +1,4 @@
-# DeepSeek-R1 W4A16 · RTX 3060 · 69.3 tok/s
+# DeepSeek-R1 W4A16 · RTX 3060 · 70.1 tok/s
 
 > **One developer + Claude Code, DeepSeek-v4-pro & Gemini. The fastest DeepSeek-R1 on consumer hardware.**
 > *Un développeur + Claude Code, DeepSeek-v4-pro & Gemini. Le DeepSeek-R1 le plus rapide sur GPU grand public.*
@@ -9,13 +9,13 @@
 
 ---
 
-## 🇫🇷 69.3 tok/s sur une RTX 3060 à 300 €
+## 🇫🇷 70.1 tok/s sur une RTX 3060 à 300 €
 
 En mai 2026, le meilleur moteur d'inférence LLM open source était
 **llama.cpp** (utilisé par Ollama), plafonnant à **62.6 tok/s** sur
 DeepSeek-R1 7B.
 
-Ce dépôt atteint **69.3 tok/s** — **10.7% plus rapide** que le standard
+Ce dépôt atteint **70.1 tok/s** — **12.0% plus rapide** que le standard
 mondial de l'IA locale.
 
 ## Qui a été dépassé ?
@@ -63,14 +63,14 @@ par commits git. Le code source des kernels CUDA reste protégé.
 
 | Métrique | Valeur |
 |----------|--------|
-| **Débit** | **69.3 tok/s** (14.4 ms/token) |
-| **Amélioration** | +87% vs baseline (37.0 → 69.3 tok/s) |
-| **vs llama.cpp** | +10.7% (62.6 → 69.3 tok/s) |
+| **Débit** | **70.1 tok/s** (14.26 ms/token) |
+| **Amélioration** | +89% vs baseline (37.0 → 70.1 tok/s) |
+| **vs llama.cpp** | +12.0% (62.6 → 70.1 tok/s) |
 | **VRAM** | ~6.5 GB |
 | **Taille des poids** | 5.3 GB (INT4 block-interleaved) |
 
-Benchmark : 100 steps de décodage, position variable, RTX 3060 12 GB,
-CUDA 12.4, PyTorch 2.6. Aucune triche de cache L2.
+Benchmark : 200 steps de décodage, GPU auto-boost 1972 MHz / 7301 MHz,
+RTX 3060 12 GB, CUDA 13.2, PyTorch 2.6. Best5 mean. Aucune triche de cache L2.
 
 ### Progression des optimisations
 
@@ -79,7 +79,8 @@ CUDA 12.4, PyTorch 2.6. Aucune triche de cache L2.
 | **P3** (baseline) | Layout k_tiled + shmem d'activations | 37.0 | — |
 | **+ P1** | Layout block-interleaved (100% coalescing L1) | 53.6 | +45% |
 | **+ P4** | cp.async double-buffering (compute/load overlap) | 65.6 | +22% |
-| **+ A2** | bfe.s32 PTX dequant + 2x unroll | **69.3** | +6% |
+| **+ A2** | bfe.s32 PTX dequant + 2x unroll | 69.3 | +6% |
+| **+ K** | Hoist sc + dual accumulateurs | **70.1** | +1.2% |
 
 ## Analyse de la bande passante
 
@@ -87,13 +88,13 @@ Le step de génération complet se décompose en deux phases :
 
 | Composante | Valeur | Note |
 |------------|--------|------|
-| **Temps total par token** | **14.43 ms** | 1000 / 69.3 |
-| Overhead fixe (attention, RMSNorm, lm_head) | 3.75 ms | Ne sollicite pas la DRAM |
-| **Temps kernels de poids (matvec, gate+up, residual)** | **10.68 ms** | 74% du step |
+| **Temps total par token** | **14.26 ms** | 1000 / 70.1 |
+| Overhead fixe (attention, RMSNorm, lm_head) | 3.68 ms | Ne sollicite pas la DRAM |
+| **Temps kernels de poids (matvec, gate+up, residual)** | **10.58 ms** | 74% du step |
 | Volume de données lues | 3.25 GB | Modèle 7B en W4A16 |
-| **Débit réel pendant les kernels** | **304.3 GB/s** | **84.5% du peak théorique (360 GB/s)** |
+| **Débit réel pendant les kernels** | **307.2 GB/s** | **85.3% du peak théorique (360 GB/s)** |
 
-Atteindre 304 GB/s de débit réel sur un algorithme aussi complexe est une
+Atteindre 307 GB/s de débit réel sur un algorithme aussi complexe est une
 performance de niveau exceptionnel. La plupart des implémentations — y
 compris llama.cpp — oscillent entre 70% et 78% d'efficacité DRAM.
 
@@ -103,30 +104,36 @@ compris llama.cpp — oscillent entre 70% et 78% d'efficacité DRAM.
 |--------|------:|----------|----------------|
 | PyTorch standard (FP16) | ~12 | 83 ms | < 15% |
 | Ollama / llama.cpp (Q4_K_M) | 62.6 | 15.9 ms | 78% |
-| **Ce runtime (W4A16)** | **69.3** | **14.4 ms** | **84.5%** |
+| **Ce runtime (W4A16)** | **70.1** | **14.26 ms** | **85.3%** |
 
 ### Le plafond : que reste-t-il ?
 
 Avec une efficacité quasi-parfaite de 95% (342 GB/s), le temps de
 chargement des poids tomberait à 9.5 ms. Avec l'overhead actuel
-de 3.75 ms, le step total serait de **13.25 ms → 75.4 tok/s**.
+de 3.68 ms, le step total serait de **13.18 ms → 75.9 tok/s**.
 
 C'est le plafond absolu pour du W4A16 sur RTX 3060 sans changer
 la précision des poids. Au-delà, il faudrait du W3A16 (2.5 GB,
-~95 tok/s projeté) ou du speculative decoding (×2-3 effectif).
+~88 tok/s projeté) ou des optimisations hardware.
 
-## Pistes en cours
+## Pistes testées et verdict
 
-Quatre optimisations supplémentaires sont à l'étude :
+| Piste | Gain estimé | Résultat |
+|-------|------------|----------|
+| **Kernel K** — hoist sc + dual accum | +1-2% | ✅ **Adopté** — 70.1 tok/s officiel |
+| **EAGLE-2 speculative decoding** — tête 1 couche, 74.1% accuracy | 0.88× solo | ❌ **Dead end** — coût lm_head 3.08ms trop cher sur RTX 3060 |
+| **Dequant INT4→FP16 via PRMT** — LUT registres + bit-stuffing | +2-4 tok/s | ❌ **5.4× plus lent** que bfe.s32 |
+| **Layout scales+poids entrelacé** — co-localiser FP32 et INT4 | +1-3 tok/s | ❌ **3% plus lent** — scale déjà amorti 32× |
+| **Lookahead / Medusa / Self-speculation** — alternatives spec decode | variable | ❌ Tous sous solo decode sur RTX 3060 |
 
-| Piste | Gain estimé | Statut |
+## Prochain levier
+
+| Piste | Gain estimé | Effort |
 |-------|------------|--------|
-| **Speculative decoding** — modèle « draft » rapide vérifié par le modèle principal | ×2-3 effectif | En cours |
-| **Layout scales+poids entrelacé** — fusionner metadata FP32 et poids INT4 (1 seule vague DRAM) | +1-3 tok/s | À faire |
-| **Dequant INT4→FP16 via PRMT** — déquantification sans passer par le pipeline INT32 | +2-4 tok/s | Non testé |
-| **Fusion des kernels de réduction** — éliminer les atomics de fin de split | +1-2 tok/s | Non testé |
+| **atomicAdd** — éliminer 168 reduce kernels | +1.5% (~71.5 tok/s) | 1-2 jours |
+| **W3A16** — poids 25% plus petits | +20% (~84-88 tok/s) | 5-7 jours |
 
-## Les trois optimisations
+## Les optimisations
 
 Chaque optimisation est horodatée par un commit git dans le dépôt de
 développement privé, établissant la paternité et l'antériorité.
@@ -161,6 +168,19 @@ par nibble (mask, shift, sign-extend). La boucle traite 1 byte
 native `bfe.s32` (1 cycle, sign-extend automatique). Déroulage 2x
 → 4 poids/iteration, exploitant le dual-issue INT32+FP32 des SM
 Ampere. Gain : **+6%**.
+
+### K — Hoist sc + dual accumulateurs (commit `79d85e1`, 11 mai 2026)
+
+**Problème** : le compilateur ne peut pas hisser la multiplication par
+le scale hors de la b-loop car les sorties `bfe.s32` (asm inline) sont
+opaques pour l'optimiseur. Résultat : 4 MUL×sc redondants par itération
+sur 32 itérations = 128 multiplications inutiles par tile. De plus, une
+seule chaîne FMA séquentielle sous-utilise les 2 pipes FP32 d'Ampere.
+
+**Solution** : accumulation des produits INT4×BF16 sans le scale dans
+une somme `gsum`, multipliée une seule fois par tile. Deux accumulateurs
+indépendants (`gsum0`/`gsum1`) pour exposer l'ILP au dual-issue FP32.
+Gain : **+1.2%** (0.14 ms, mesuré sur 200 steps).
 
 ## Matériel compatible
 
@@ -231,12 +251,12 @@ Je suis à l'écoute pour :
 
 ---
 
-## 🇬🇧 69.3 tok/s on a $300 RTX 3060
+## 🇬🇧 70.1 tok/s on a $300 RTX 3060
 
 In May 2026, the best open-source LLM inference engine was **llama.cpp**
 (used by Ollama), topping out at **62.6 tok/s** on DeepSeek-R1 7B.
 
-This repo reaches **69.3 tok/s** — **10.7% faster** than the global
+This repo reaches **70.1 tok/s** — **12.0% faster** than the global
 standard for local AI.
 
 ## Who was beaten?
@@ -283,14 +303,14 @@ CUDA kernel source code remains protected.
 
 | Metric | Value |
 |--------|-------|
-| **Throughput** | **69.3 tok/s** (14.4 ms/token) |
-| **Improvement** | +87% over baseline (37.0 → 69.3 tok/s) |
-| **vs llama.cpp** | +10.7% (62.6 → 69.3 tok/s) |
+| **Throughput** | **70.1 tok/s** (14.26 ms/token) |
+| **Improvement** | +89% over baseline (37.0 → 70.1 tok/s) |
+| **vs llama.cpp** | +12.0% (62.6 → 70.1 tok/s) |
 | **VRAM** | ~6.5 GB |
 | **Weight file** | 5.3 GB (INT4 block-interleaved) |
 
-Benchmark: 100 decode steps, variable position, RTX 3060 12 GB,
-CUDA 12.4, PyTorch 2.6. No L2 cache tricks.
+Benchmark: 200 decode steps, GPU auto-boost 1972 MHz / 7301 MHz,
+RTX 3060 12 GB, CUDA 13.2, PyTorch 2.6. Best5 mean. No L2 cache tricks.
 
 ### Optimization progression
 
@@ -299,7 +319,8 @@ CUDA 12.4, PyTorch 2.6. No L2 cache tricks.
 | **P3** (baseline) | k_tiled layout + activation shmem | 37.0 | — |
 | **+ P1** | Block-interleaved layout (100% L1 coalescing) | 53.6 | +45% |
 | **+ P4** | cp.async double-buffering (compute/load overlap) | 65.6 | +22% |
-| **+ A2** | bfe.s32 PTX dequant + 2x unroll | **69.3** | +6% |
+| **+ A2** | bfe.s32 PTX dequant + 2x unroll | 69.3 | +6% |
+| **+ K** | Hoist sc + dual accumulators | **70.1** | +1.2% |
 
 ## Bandwidth Analysis
 
@@ -307,13 +328,13 @@ Each generation step breaks down into two phases:
 
 | Component | Value | Note |
 |-----------|-------|------|
-| **Total time per token** | **14.43 ms** | 1000 / 69.3 |
-| Fixed overhead (attention, RMSNorm, lm_head) | 3.75 ms | Minimal DRAM usage |
-| **Weight kernel time (matvec, gate+up, residual)** | **10.68 ms** | 74% of the step |
+| **Total time per token** | **14.26 ms** | 1000 / 70.1 |
+| Fixed overhead (attention, RMSNorm, lm_head) | 3.68 ms | Minimal DRAM usage |
+| **Weight kernel time (matvec, gate+up, residual)** | **10.58 ms** | 74% of the step |
 | Data volume read | 3.25 GB | 7B model in W4A16 |
-| **Actual throughput during weight kernels** | **304.3 GB/s** | **84.5% of theoretical peak (360 GB/s)** |
+| **Actual throughput during weight kernels** | **307.2 GB/s** | **85.3% of theoretical peak (360 GB/s)** |
 
-Achieving 304 GB/s of real throughput on a complex sparse-access algorithm is
+Achieving 307 GB/s of real throughput on a complex sparse-access algorithm is
 an exceptional result. Most implementations — including llama.cpp — operate
 between 70% and 78% DRAM efficiency.
 
@@ -323,30 +344,36 @@ between 70% and 78% DRAM efficiency.
 |--------|------:|----------|----------------|
 | PyTorch standard (FP16) | ~12 | 83 ms | < 15% |
 | Ollama / llama.cpp (Q4_K_M) | 62.6 | 15.9 ms | 78% |
-| **This runtime (W4A16)** | **69.3** | **14.4 ms** | **84.5%** |
+| **This runtime (W4A16)** | **70.1** | **14.26 ms** | **85.3%** |
 
 ### The Ceiling: What's Left?
 
 With near-perfect 95% efficiency (342 GB/s), weight load time would drop
-to 9.5 ms. With the current 3.75 ms overhead, the total step would be
-**13.25 ms → 75.4 tok/s**.
+to 9.5 ms. With the current 3.68 ms overhead, the total step would be
+**13.18 ms → 75.9 tok/s**.
 
 That's the absolute W4A16 ceiling on RTX 3060 without changing weight
-precision. Beyond this: W3A16 (2.5 GB, ~95 tok/s projected) or speculative
-decoding (×2-3 effective).
+precision. Beyond this: W3A16 (2.5 GB, ~88 tok/s projected) or hardware
+optimizations.
 
-## Coming Next
+## Tested & Verdict
 
-Four additional optimizations under investigation:
-
-| Track | Est. gain | Status |
+| Track | Est. gain | Result |
 |-------|-----------|--------|
-| **Speculative decoding** — fast draft model verified by the main model | ×2-3 effective | In progress |
-| **Interleaved scale+weight layout** — fuse FP32 metadata and INT4 weights (single DRAM wave) | +1-3 tok/s | Planned |
-| **INT4→FP16 dequant via PRMT** — bit-stuffing dequant bypassing the INT32 pipeline | +2-4 tok/s | Not tested |
-| **Reduction kernel fusion** — eliminate end-of-split atomics | +1-2 tok/s | Not tested |
+| **Kernel K** — hoist sc + dual accum | +1-2% | ✅ **Adopted** — 70.1 tok/s official |
+| **EAGLE-2 speculative decoding** — 1-layer head, 74.1% accuracy | 0.88× solo | ❌ **Dead end** — lm_head cost 3.08ms too high on RTX 3060 |
+| **INT4→FP16 dequant via PRMT** — register LUT + bit-stuffing | +2-4 tok/s | ❌ **5.4× slower** than bfe.s32 |
+| **Interleaved scale+weight layout** — co-locate FP32 and INT4 | +1-3 tok/s | ❌ **3% slower** — scale already amortized 32× |
+| **Lookahead / Medusa / Self-speculation** — alternative spec decode | variable | ❌ All below solo decode on RTX 3060 |
 
-## The Three Optimizations
+## Next Lever
+
+| Track | Est. gain | Effort |
+|-------|-----------|--------|
+| **atomicAdd** — eliminate 168 reduce kernels | +1.5% (~71.5 tok/s) | 1-2 days |
+| **W3A16** — 25% smaller weights | +20% (~84-88 tok/s) | 5-7 days |
+
+## The Optimizations
 
 Each optimization is timestamped by a git commit in the private
 development repository, establishing authorship and priority.
@@ -378,6 +405,19 @@ iteration.
 **Solution**: direct nibble extraction via native PTX `bfe.s32` (1
 cycle, automatic sign-extension). 2x unrolling → 4 weights/iteration,
 exploiting Ampere SM dual-issue on INT32+FP32 pipes. Gain: **+6%**.
+
+### K — Hoist sc + dual accumulators (commit `79d85e1`, May 11, 2026)
+
+**Problem**: the compiler cannot hoist the scale multiplication out of
+the inner loop because `bfe.s32` inline-asm outputs are opaque to the
+optimizer. Result: 4 redundant MUL×sc per iteration × 32 iterations =
+128 wasted multiplies per tile. A single sequential FMA chain also
+under-utilizes Ampere's 2 FP32 pipes.
+
+**Solution**: accumulate INT4×BF16 products without the scale into a
+`gsum`, multiplied once per tile. Two independent accumulators
+(`gsum0`/`gsum1`) to expose ILP to dual-issue FP32.
+Gain: **+1.2%** (0.14 ms, measured over 200 steps).
 
 ## Compatible Hardware
 
@@ -429,44 +469,6 @@ Software under **restrictive license**. See `LICENSE`.
 - ❌ Commercial use without written agreement
 - ❌ Reverse engineering of the `.so`
 - ❌ Redistribution without authorization
-
-## 🔬 Pistes en cours (9 mai 2026)
-
-### Speculative decoding — Modèles Qwen2.5-Coder
-
-Le spec decoding standard (draft 0.5B/1.5B + target 7B) plafonne à **56 tok/s**
-sur RTX 3060 — le coût du draft partage la bande passante mémoire avec le verifier.
-
-| Draft | tok/s | Acceptance |
-|-------|------:|-----------:|
-| Qwen2.5-Coder-0.5B (W4A16) | 56.2 | 46% @K=3 |
-| Qwen2.5-Coder-1.5B (W4A16) | 48.5 | 66% @K=4 |
-
-L'acceptance Coder-Coder est 6-24pp supérieure à Instruct-Instruct (même corpus
-d'entraînement → meilleur alignement), mais le coût du draft séparé empêche de
-battre le solo decode (70.3 tok/s).
-
-**Prochaine étape : EAGLE-2**
-
-Les têtes EAGLE-2 Qwen2-7B (`yuhuili/EAGLE-Qwen2-7B-Instruct`) sont
-architecturalement compatibles avec Qwen2.5-Coder-7B (hidden=3584, vocab=152064).
-Un transformer 1 couche (~200 MB) prédit K tokens depuis les états cachés du
-modèle cible — pas de second modèle en VRAM.
-
-| Approche | Coût draft | Acceptance visée | tok/s projeté |
-|----------|-----------|-----------------|---------------|
-| EAGLE-2 intégré W4A16 | ~0.5 ms | 60-70% | **80-110** |
-
-Étapes :
-1. Test acceptation EAGLE-2 Qwen2-7B → Coder-7B (venv transformers 4.x)
-2. Extraction hidden states depuis les kernels CUDA W4A16
-3. Portage du head EAGLE en CUDA (1 couche + tree attention)
-4. Intégration dans le pipeline verify
-
-### Au-delà
-- **Self-speculation** : early exit du modèle cible (alignement parfait, 0 VRAM additionnelle)
-- **PRMT bit-stuffing** : déquantification INT4→FP16 directe (+2-4 tok/s)
-- **Multi-GPU** : draft sur GPU secondaire ou iGPU
 
 ---
 
