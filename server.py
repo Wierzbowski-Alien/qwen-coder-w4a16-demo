@@ -1,8 +1,8 @@
-"""DeepSeek-R1 W4A16 — demo web interactive."""
+"""DeepSeek-R1 W4A16 — demo web interactive with SSE streaming."""
 import sys, os, time, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, Response, render_template
 import torch
 import deepseek_r1_w4_model as m
 
@@ -30,8 +30,8 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/generate", methods=["POST"])
-def generate():
+@app.route("/stream", methods=["POST"])
+def stream():
     data = request.get_json()
     prompt = data.get("prompt", "").strip()
     max_tokens = int(data.get("max_tokens", 100))
@@ -40,22 +40,24 @@ def generate():
     if not prompt:
         return jsonify({"error": "Prompt vide"}), 400
 
-    try:
-        d = get_decoder()
-        torch.cuda.synchronize()
-        t0 = time.perf_counter()
-        output = d.generate(prompt, max_tokens=max_tokens)
-        torch.cuda.synchronize()
-        elapsed = time.perf_counter() - t0
+    d = get_decoder()
 
-        return jsonify({
-            "response": output,
-            "time_s": round(elapsed, 2),
-            "tokens": max_tokens,
-            "tok_s": round(max_tokens / elapsed, 1),
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    def generate():
+        t0 = time.perf_counter()
+        token_count = 0
+        try:
+            for text in d.generate_stream(prompt, max_tokens=max_tokens):
+                token_count += 1
+                yield f"data: {json.dumps({'text': text, 'n': token_count})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            return
+
+        elapsed = time.perf_counter() - t0
+        yield f"data: {json.dumps({'done': True, 'time_s': round(elapsed, 2), 'tokens': token_count, 'tok_s': round(token_count / elapsed, 1) if elapsed > 0 else 0})}\n\n"
+
+    return Response(generate(), mimetype="text/event-stream",
+                    headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
 
 
 @app.route("/health")
@@ -68,9 +70,9 @@ def health():
 
 
 if __name__ == "__main__":
-    print("Chargement du modèle...")
+    print("Chargement du modele...")
     get_decoder()
-    print(f"Modèle prêt. GPU: {torch.cuda.get_device_name(0)}")
-    print(f"VRAM utilisée: {torch.cuda.memory_allocated()/1e9:.1f} GB")
-    print("\nServeur démarré → http://localhost:8080")
+    print(f"Modele pret. GPU: {torch.cuda.get_device_name(0)}")
+    print(f"VRAM utilisee: {torch.cuda.memory_allocated()/1e9:.1f} GB")
+    print("\nServeur demarre → http://localhost:8080")
     app.run(host="0.0.0.0", port=8080, debug=False)

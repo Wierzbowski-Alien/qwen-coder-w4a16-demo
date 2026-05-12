@@ -14,232 +14,290 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2rem 1rem;
   }
-  .container { width: 100%; max-width: 800px; }
-  header {
-    text-align: center;
-    margin-bottom: 2rem;
+
+  .container { width: 100%; max-width: 820px; padding: 1.5rem 1rem; display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* Header */
+  header { text-align: center; margin-bottom: 1.5rem; flex-shrink: 0; }
+  header h1 { font-size: 1.5rem; color: #58a6ff; margin-bottom: 0.2rem; letter-spacing: -0.01em; }
+  header .specs { font-size: 0.8rem; color: #8b949e; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+  header .specs span { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 0.15rem 0.55rem; white-space: nowrap; }
+  .badge {
+    display: inline-block; background: #1f2a1f; color: #3fb950;
+    border: 1px solid #3fb95033; border-radius: 12px;
+    padding: 0.15rem 0.55rem; font-size: 0.78rem; font-weight: 600;
   }
-  header h1 { font-size: 1.6rem; color: #58a6ff; margin-bottom: 0.3rem; }
-  header p  { font-size: 0.85rem; color: #8b949e; }
-  .card {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
+
+  /* Chat area */
+  #chat {
+    flex: 1; overflow-y: auto; margin-bottom: 1rem;
+    display: flex; flex-direction: column; gap: 0.75rem;
+  }
+  .msg {
+    max-width: 85%; padding: 0.75rem 1rem; border-radius: 10px;
+    font-size: 0.92rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .msg.user {
+    align-self: flex-end; background: #1f3a5f; color: #c9d1d9;
+    border-bottom-right-radius: 3px;
+  }
+  .msg.assistant {
+    align-self: flex-start; background: #161b22; color: #c9d1d9;
+    border: 1px solid #30363d; border-bottom-left-radius: 3px;
+  }
+  .msg-label {
+    font-size: 0.72rem; font-weight: 600; margin-bottom: 0.3rem;
+    color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .msg.user .msg-label { color: #79c0ff; }
+  .msg.assistant.streaming .msg-label { color: #3fb950; }
+  .msg.assistant.streaming .msg-label::after { content: " ●"; animation: pulse 1s ease infinite; }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+
+  /* Stats inside assistant message */
+  .msg-stats {
+    margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #30363d;
+    font-size: 0.75rem; color: #8b949e; display: none;
+  }
+  .msg-stats.visible { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .msg-stats strong { color: #58a6ff; }
+
+  /* Input area */
+  #inputCard {
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    padding: 1rem 1.25rem; flex-shrink: 0;
   }
   textarea {
-    width: 100%;
-    min-height: 80px;
-    background: #0d1117;
-    border: 1px solid #30363d;
-    border-radius: 6px;
-    color: #c9d1d9;
-    padding: 0.75rem;
-    font-family: monospace;
-    font-size: 0.95rem;
-    resize: vertical;
-    outline: none;
-    transition: border-color 0.2s;
+    width: 100%; min-height: 64px; max-height: 160px;
+    background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+    color: #c9d1d9; padding: 0.65rem 0.75rem;
+    font-family: monospace; font-size: 0.9rem;
+    resize: none; outline: none; transition: border-color 0.2s;
   }
   textarea:focus { border-color: #58a6ff; }
   .row {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-    margin-top: 0.75rem;
-    flex-wrap: wrap;
+    display: flex; gap: 0.5rem; align-items: center;
+    margin-top: 0.65rem; flex-wrap: wrap;
   }
-  .row label { font-size: 0.85rem; color: #8b949e; white-space: nowrap; }
-  input[type="range"] { flex: 1; min-width: 120px; accent-color: #58a6ff; }
-  #tokLabel { color: #58a6ff; font-weight: 600; min-width: 2.5rem; }
+  .row label { font-size: 0.8rem; color: #8b949e; white-space: nowrap; }
+  input[type="range"] { flex: 1; min-width: 100px; accent-color: #58a6ff; }
+  #tokLabel { color: #58a6ff; font-weight: 600; min-width: 2.5rem; font-size: 0.85rem; }
   button {
-    background: #238636;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 0.65rem 1.5rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, opacity 0.15s;
-    white-space: nowrap;
+    border: none; border-radius: 6px; padding: 0.55rem 1.2rem;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.15s, opacity 0.15s; white-space: nowrap;
   }
-  button:hover { background: #2ea043; }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  #btnSend {
+    background: #238636; color: white;
+  }
+  #btnSend:hover { background: #2ea043; }
+  #btnSend:disabled { opacity: 0.45; cursor: not-allowed; }
+  #btnStop {
+    background: #da3633; color: white; display: none;
+  }
+  #btnStop:hover { background: #f85149; }
+  #btnStop.visible { display: inline-block; }
   .prompts {
-    display: flex;
-    gap: 0.4rem;
-    flex-wrap: wrap;
-    margin-top: 0.5rem;
+    display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.5rem;
   }
   .prompts button {
-    background: #21262d;
-    color: #8b949e;
-    font-size: 0.78rem;
-    padding: 0.3rem 0.7rem;
-    font-weight: 400;
+    background: #21262d; color: #8b949e;
+    font-size: 0.74rem; padding: 0.25rem 0.6rem; font-weight: 400;
     border: 1px solid #30363d;
   }
   .prompts button:hover { background: #30363d; color: #c9d1d9; }
-  #response {
-    background: #0d1117;
-    border: 1px solid #30363d;
-    border-radius: 6px;
-    padding: 1rem;
-    min-height: 60px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    display: none;
-  }
-  #response.visible { display: block; }
-  #loader {
-    display: none;
-    text-align: center;
-    padding: 2rem;
-    color: #8b949e;
-  }
-  #loader.visible { display: block; }
-  .spinner {
-    width: 24px; height: 24px;
-    border: 3px solid #30363d;
-    border-top-color: #58a6ff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 0.5rem;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .stats {
-    display: flex;
-    gap: 1.5rem;
-    margin-top: 0.75rem;
-    font-size: 0.82rem;
-    color: #8b949e;
-    flex-wrap: wrap;
-  }
-  .stats span { color: #58a6ff; font-weight: 600; }
-  .error {
-    color: #f85149;
-    background: #1f0e0e;
-    border: 1px solid #f8514933;
-    border-radius: 6px;
-    padding: 1rem;
-    display: none;
-  }
-  .error.visible { display: block; }
-  .badge {
-    display: inline-block;
-    background: #1f2a1f;
-    color: #3fb950;
-    border: 1px solid #3fb95033;
-    border-radius: 20px;
-    padding: 0.15rem 0.6rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    margin-left: 0.5rem;
+
+  /* Scrollbar */
+  #chat::-webkit-scrollbar { width: 6px; }
+  #chat::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+  /* Empty state */
+  .empty { text-align: center; color: #484f58; padding: 3rem 1rem; font-size: 0.9rem; }
+  .empty p { margin-bottom: 0.3rem; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container { padding: 0.75rem 0.5rem; }
+    .msg { max-width: 92%; }
+    header h1 { font-size: 1.2rem; }
   }
 </style>
 </head>
 <body>
 <div class="container">
   <header>
-    <h1>DeepSeek-R1 <span style="color:#c9d1d9;">W4A16</span> <span class="badge">69 tok/s</span></h1>
-    <p>RTX 3060 • 6.5 GB VRAM • 7B params INT4 • CUDA custom kernels</p>
+    <h1>DeepSeek-R1 <span style="color:#c9d1d9;">W4A16</span> <span class="badge">70.1 tok/s</span></h1>
+    <div class="specs">
+      <span>RTX 3060 12GB</span>
+      <span>8.1 GB VRAM</span>
+      <span>7B INT4</span>
+      <span>CUDA custom</span>
+    </div>
   </header>
 
-  <div class="card">
-    <textarea id="prompt" placeholder="Pose une question, écris une histoire...">The capital of France is</textarea>
+  <div id="chat"></div>
+
+  <div id="inputCard">
+    <textarea id="prompt" placeholder="Pose une question, ecris une histoire..." rows="3"></textarea>
     <div class="prompts">
-      <button onclick="setPrompt('The capital of France is')">Paris ?</button>
-      <button onclick="setPrompt('Explain quantum computing in simple terms.')">Quantum</button>
-      <button onclick="setPrompt('Write a haiku about programming.')">Haiku</button>
-      <button onclick="setPrompt('def fibonacci(n):')">Fibonacci</button>
-      <button onclick="setPrompt('Once upon a time,')">Histoire</button>
-      <button onclick="setPrompt('What is the meaning of life?')">Philosophie</button>
+      <button onclick="setPrompt('Explain quantum computing simply.')">Quantum</button>
+      <button onclick="setPrompt('Write a haiku about GPU kernels.')">Haiku</button>
+      <button onclick="setPrompt('Implement a binary search in Python:')">Python</button>
+      <button onclick="setPrompt('What is the capital of France?')">Paris ?</button>
+      <button onclick="setPrompt('Once upon a time, in a land of silicon and light,')">Histoire</button>
+      <button onclick="setPrompt('The meaning of life is')">Philo</button>
     </div>
     <div class="row">
-      <label for="tokens">Tokens max :</label>
-      <input type="range" id="tokens" min="10" max="500" value="100" step="10" oninput="updateTokLabel()">
-      <span id="tokLabel">100</span>
-      <button id="btnGenerate" onclick="doGenerate()">Générer</button>
+      <label for="tokens">Tokens :</label>
+      <input type="range" id="tokens" min="10" max="500" value="120" step="10" oninput="$('tokLabel').textContent=this.value">
+      <span id="tokLabel">120</span>
+      <button id="btnSend" onclick="doGenerate()">Generer</button>
+      <button id="btnStop" onclick="stopGeneration()">Stop</button>
     </div>
-  </div>
-
-  <div id="loader"><div class="spinner"></div>Génération en cours...</div>
-  <div id="error" class="error"></div>
-  <div id="response"></div>
-  <div class="stats" id="stats" style="display:none">
-    <div>Temps : <span id="statTime">—</span></div>
-    <div>Tokens : <span id="statTokens">—</span></div>
-    <div>Débit : <span id="statSpeed">—</span></div>
   </div>
 </div>
 
 <script>
-let loading = false;
-
-function setPrompt(text) {
-  document.getElementById('prompt').value = text;
-}
-
-function updateTokLabel() {
-  document.getElementById('tokLabel').textContent = document.getElementById('tokens').value;
-}
+let abortCtrl = null;
+let streamingMsg = null;
 
 function $(id) { return document.getElementById(id); }
 
+function setPrompt(t) { $('prompt').value = t; $('prompt').focus(); }
+
+function scrollChat() {
+  const chat = $('chat');
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addMessage(role, text) {
+  const chat = $('chat');
+  // Remove empty state if present
+  const empty = chat.querySelector('.empty');
+  if (empty) empty.remove();
+
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = '<div class="msg-label">' + (role === 'user' ? 'Vous' : 'DeepSeek-R1') + '</div>'
+    + '<div class="msg-body">' + text + '</div>';
+  chat.appendChild(div);
+  scrollChat();
+  return div;
+}
+
 async function doGenerate() {
-  if (loading) return;
+  if (abortCtrl) return;
+
   const prompt = $('prompt').value.trim();
   if (!prompt) return;
 
-  loading = true;
-  $('btnGenerate').disabled = true;
-  $('loader').classList.add('visible');
-  $('response').classList.remove('visible');
-  $('error').classList.remove('visible');
-  $('stats').style.display = 'none';
+  abortCtrl = new AbortController();
+  $('btnSend').disabled = true;
+  $('btnStop').classList.add('visible');
+
+  // Add user message
+  addMessage('user', prompt);
+  $('prompt').value = '';
+
+  // Create streaming assistant message
+  streamingMsg = addMessage('assistant', '');
+  streamingMsg.classList.add('streaming');
+  const body = streamingMsg.querySelector('.msg-body');
+
+  const maxTokens = parseInt($('tokens').value);
+  let fullText = '';
+  let tokenCount = 0;
 
   try {
-    const res = await fetch('/generate', {
+    const res = await fetch('/stream', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        prompt: prompt,
-        max_tokens: parseInt($('tokens').value)
-      })
+      body: JSON.stringify({prompt, max_tokens: maxTokens}),
+      signal: abortCtrl.signal
     });
 
-    const data = await res.json();
-    if (data.error) {
-      $('error').textContent = data.error;
-      $('error').classList.add('visible');
-    } else {
-      $('response').textContent = data.response;
-      $('response').classList.add('visible');
-      $('statTime').textContent = data.time_s + ' s';
-      $('statTokens').textContent = data.tokens;
-      $('statSpeed').textContent = data.tok_s + ' tok/s';
-      $('stats').style.display = 'flex';
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+
+      buf += decoder.decode(value, {stream: true});
+      const lines = buf.split('\n');
+      buf = lines.pop(); // keep incomplete line in buffer
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = JSON.parse(line.slice(6));
+
+        if (data.error) {
+          body.textContent = 'Erreur: ' + data.error;
+          streamingMsg.classList.add('error');
+          streamingMsg.classList.remove('streaming');
+          break;
+        }
+
+        if (data.done) {
+          tokenCount = data.tokens;
+          // Add stats
+          const stats = streamingMsg.querySelector('.msg-stats');
+          if (!stats) {
+            const s = document.createElement('div');
+            s.className = 'msg-stats visible';
+            s.innerHTML = '<span>Temps: <strong>' + data.time_s + ' s</strong></span>'
+              + '<span>Tokens: <strong>' + data.tokens + '</strong></span>'
+              + '<span>Debit: <strong>' + data.tok_s + ' tok/s</strong></span>';
+            streamingMsg.appendChild(s);
+          }
+        } else {
+          fullText = data.text;
+          tokenCount = data.n;
+          body.textContent = fullText;
+          scrollChat();
+        }
+      }
     }
   } catch (e) {
-    $('error').textContent = 'Erreur de connexion : ' + e.message;
-    $('error').classList.add('visible');
+    if (e.name === 'AbortError') {
+      if (fullText) {
+        body.textContent = fullText + ' [arrete]';
+      } else {
+        body.textContent = '[Generation annulee]';
+      }
+    } else {
+      body.textContent = 'Erreur de connexion: ' + e.message;
+    }
   }
 
-  $('loader').classList.remove('visible');
-  $('btnGenerate').disabled = false;
-  loading = false;
+  streamingMsg.classList.remove('streaming');
+  $('btnSend').disabled = false;
+  $('btnStop').classList.remove('visible');
+  abortCtrl = null;
+  streamingMsg = null;
 }
 
-// Allow Ctrl+Enter to generate
+function stopGeneration() {
+  if (abortCtrl) {
+    abortCtrl.abort();
+    abortCtrl = null;
+  }
+}
+
+// Keyboard shortcut
 $('prompt').addEventListener('keydown', function(e) {
   if (e.ctrlKey && e.key === 'Enter') doGenerate();
 });
+
+// Show empty state on load
+(function() {
+  const chat = $('chat');
+  chat.innerHTML = '<div class="empty"><p>DeepSeek-R1 W4A16 — 70.1 tok/s sur RTX 3060</p><p style="font-size:0.8rem">Ecrivez un message pour commencer.</p></div>';
+})();
 </script>
 </body>
 </html>

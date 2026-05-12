@@ -735,6 +735,60 @@ class Decoder:
 
         import re
         decoded = self.tokenizer.decode(out, skip_special_tokens=True)
+        # Fix GPT-2 byte-fallback: Ġ(U+0120)→space, Ċ(U+010A)→\n, etc.
+        decoded = ''.join(
+            chr(ord(c) & 0xFF) if 0x100 <= ord(c) < 0x200 else c
+            for c in decoded
+        )
         decoded = re.sub(r'<think>.*?</think>', '', decoded, flags=re.DOTALL)
         decoded = decoded.replace('</think>', '').strip()
         return decoded
+
+    def generate_stream(self, prompt: str, max_tokens: int = 512,
+                        thinking: bool = False):
+        """Generator yielding progressively decoded text for SSE streaming."""
+        self.reset()
+
+        if thinking:
+            messages = [{"role": "user", "content": prompt}]
+        else:
+            messages = [
+                {"role": "system", "content": "/no_think"},
+                {"role": "user", "content": prompt},
+            ]
+
+        chat_text = self.tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True,
+        )
+        ids = self.tokenizer.encode(chat_text, add_special_tokens=False)
+
+        if thinking:
+            think_id = self.tokenizer.convert_tokens_to_ids("<think>")
+            if think_id != self.tokenizer.unk_token_id:
+                ids = ids + [think_id]
+
+        if len(ids) >= MAX_SEQ_LEN - max_tokens:
+            ids = ids[-(MAX_SEQ_LEN - max_tokens - 1):]
+
+        if len(ids) > 1:
+            next_id = self.prefill(ids)
+        else:
+            next_id = self.step(ids[0])
+
+        im_end_id = self.tokenizer.convert_tokens_to_ids("<|im_end|>")
+        eos_ids = {self.tokenizer.eos_token_id, im_end_id}
+        out = []
+        for _ in range(max_tokens):
+            if next_id in eos_ids:
+                break
+            out.append(next_id)
+
+            # Progressive decode with byte-fallback fix
+            decoded = self.tokenizer.decode(out, skip_special_tokens=True)
+            decoded = ''.join(
+                chr(ord(c) & 0xFF) if 0x100 <= ord(c) < 0x200 else c
+                for c in decoded
+            )
+            yield decoded
+
+            next_id = self.step(next_id)
