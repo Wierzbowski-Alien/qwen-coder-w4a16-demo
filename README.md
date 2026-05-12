@@ -92,7 +92,9 @@ RTX 3060 (360 GB/s) :
 ```
 
 Quantifier en 4-bit **quadruple le plafond**. La question devient : quelle
-fraction de ce plafond peut-on atteindre ? Nous sommes à **68%** (70.1 / 103).
+fraction de ce plafond peut-on atteindre ? Nous sommes à **68%** du plafond
+W4A16 brut (70.1 / 103), avec une **efficacité DRAM de 85.3%** (307.2 / 360 GB/s)
+pendant les kernels de poids.
 
 ### Progression des optimisations
 
@@ -266,18 +268,20 @@ Architecture : Ampere GA10x (sm_86). Minimum 8 GB VRAM.
 
 ### Performance projetée par GPU
 
-Estimations basées sur les 68% d'efficacité mesurés sur RTX 3060. Recompilation
-requise avec le bon `-DNUM_BLOCKS` pour le nombre de SM.
+Estimations basées sur les **85.3% d'efficacité DRAM** mesurés sur RTX 3060
+(307.2 GB/s effectifs). Modèle à deux composantes : overhead fixe (3.68 ms)
++ temps de poids proportionnel à la bande passante. Recompilation requise
+avec le bon `-DNUM_BLOCKS` pour le nombre de SM.
 
 | GPU | SMs | Bande passante | Plafond W4A16 | tok/s estimé |
 |-----|:---:|:--------------:|:-------------:|:------------:|
 | **RTX 3060 12 GB** | 28 | 360 GB/s | 103 tok/s | **70 tok/s** ✅ |
-| RTX 3060 Ti | 38 | 448 GB/s | 128 tok/s | ~87 tok/s |
-| RTX 3070 | 46 | 448 GB/s | 128 tok/s | ~87 tok/s |
-| RTX 3070 Ti | 48 | 608 GB/s | 174 tok/s | ~118 tok/s |
-| RTX 3080 10 GB | 68 | 760 GB/s | 217 tok/s | ~148 tok/s |
-| RTX 3080 Ti | 80 | 912 GB/s | 261 tok/s | ~178 tok/s |
-| RTX 3090 | 82 | 936 GB/s | 267 tok/s | ~182 tok/s |
+| RTX 3060 Ti | 38 | 448 GB/s | 128 tok/s | ~82 tok/s |
+| RTX 3070 | 46 | 448 GB/s | 128 tok/s | ~82 tok/s |
+| RTX 3070 Ti | 48 | 608 GB/s | 174 tok/s | ~101 tok/s |
+| RTX 3080 10 GB | 68 | 760 GB/s | 217 tok/s | ~115 tok/s |
+| RTX 3080 Ti | 80 | 912 GB/s | 261 tok/s | ~127 tok/s |
+| RTX 3090 | 82 | 936 GB/s | 267 tok/s | ~129 tok/s |
 
 ## Méthodologie de mesure
 
@@ -485,7 +489,9 @@ RTX 3060 (360 GB/s):
 ```
 
 Quantizing to 4-bit **quadruples the ceiling**. The question becomes: what
-fraction of that ceiling can you reach? We hit **68%** (70.1 / 103).
+fraction of that ceiling can you reach? We hit **68%** of the raw W4A16 ceiling
+(70.1 / 103), with **85.3% DRAM efficiency** (307.2 / 360 GB/s) during weight
+kernels.
 
 ### Optimization progression
 
@@ -655,18 +661,20 @@ Architecture: Ampere GA10x (sm_86). Minimum 8 GB VRAM.
 
 ### Expected Performance by GPU
 
-Estimates assume the same 68% end-to-end BW efficiency measured on RTX 3060.
-Recompile with the correct `-DNUM_BLOCKS` for your SM count.
+Estimates use the **85.3% DRAM efficiency** measured on RTX 3060 (307.2 GB/s
+effective). Two-component model: fixed overhead (3.68 ms) + weight time
+scaling with bandwidth. Recompile with the correct `-DNUM_BLOCKS` for your
+SM count.
 
 | GPU | SMs | Bandwidth | W4A16 Ceiling | Est. tok/s |
 |-----|:---:|:---------:|:-------------:|:----------:|
 | **RTX 3060 12 GB** | 28 | 360 GB/s | 103 tok/s | **70 tok/s** ✅ |
-| RTX 3060 Ti | 38 | 448 GB/s | 128 tok/s | ~87 tok/s |
-| RTX 3070 | 46 | 448 GB/s | 128 tok/s | ~87 tok/s |
-| RTX 3070 Ti | 48 | 608 GB/s | 174 tok/s | ~118 tok/s |
-| RTX 3080 10 GB | 68 | 760 GB/s | 217 tok/s | ~148 tok/s |
-| RTX 3080 Ti | 80 | 912 GB/s | 261 tok/s | ~178 tok/s |
-| RTX 3090 | 82 | 936 GB/s | 267 tok/s | ~182 tok/s |
+| RTX 3060 Ti | 38 | 448 GB/s | 128 tok/s | ~82 tok/s |
+| RTX 3070 | 46 | 448 GB/s | 128 tok/s | ~82 tok/s |
+| RTX 3070 Ti | 48 | 608 GB/s | 174 tok/s | ~101 tok/s |
+| RTX 3080 10 GB | 68 | 760 GB/s | 217 tok/s | ~115 tok/s |
+| RTX 3080 Ti | 80 | 912 GB/s | 261 tok/s | ~127 tok/s |
+| RTX 3090 | 82 | 936 GB/s | 267 tok/s | ~129 tok/s |
 
 ## Measurement Methodology
 
