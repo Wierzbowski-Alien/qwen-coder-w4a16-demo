@@ -39,7 +39,8 @@ a été sculpté pour un **circuit spécifique** : la RTX 3060 12 GB.
 - **llama.cpp** : ~50 mainteneurs principaux, 800+ contributeurs, des années de R&D
 - **vLLM** : développé par UC Berkeley, financé par des millions de dollars de capital-risque
 - **TensorRT-LLM** : l'équipe officielle NVIDIA, accès aux spécifications internes des GPU
-- **Ce runtime** : 1 développeur, Claude Code, DeepSeek-v4-pro, Gemini, 3 optimisations en 48 heures
+- **Ce runtime** : 1 développeur, Claude Code, DeepSeek-v4-pro, Gemini, optimisations en moins de 10 jours
+- **Plateforme Lucebox** : générateur Jinja de kernels CUDA multi-modèles × multi-GPU en développement — 13 modèles, 7 GPU profilés
 
 Le résultat : un GPU à 300 € qui atteint la réactivité d'une station de
 travail professionnelle. **Le Qwen 2.5 Coder 7B le plus rapide du monde sur
@@ -432,7 +433,8 @@ runtime was sculpted for a **single circuit**: the RTX 3060 12 GB.
 - **llama.cpp**: ~50 core maintainers, 800+ contributors, years of R&D
 - **vLLM**: built by UC Berkeley, millions in VC funding
 - **TensorRT-LLM**: NVIDIA's own team, access to internal GPU specs
-- **This runtime**: 1 developer, Claude Code, DeepSeek-v4-pro, Gemini, 3 optimizations in 48 hours
+- **This runtime**: 1 developer, Claude Code, DeepSeek-v4-pro, Gemini, optimizations in under 10 days
+- **Lucebox Platform**: multi-model × multi-GPU Jinja CUDA kernel generator in development — 13 models, 7 GPUs profiled
 
 The result: a $300 GPU delivering workstation-class responsiveness.
 **The world's fastest Qwen 2.5 Coder 7B on RTX 3060.**
