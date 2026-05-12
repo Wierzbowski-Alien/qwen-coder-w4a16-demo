@@ -271,17 +271,18 @@ Architecture : Ampere GA10x (sm_86). Minimum 8 GB VRAM.
 Estimations basées sur les **85.3% d'efficacité DRAM** mesurés sur RTX 3060
 (307.2 GB/s effectifs). Modèle à deux composantes : overhead fixe (3.68 ms)
 + temps de poids proportionnel à la bande passante. Recompilation requise
-avec le bon `-DNUM_BLOCKS` pour le nombre de SM.
+avec le bon `-DNUM_BLOCKS` pour le nombre de SM. Estimation llama.cpp basée
+sur la même méthode avec **78% d'efficacité DRAM** (overhead 4.40 ms).
 
-| GPU | SMs | Bande passante | Plafond W4A16 | tok/s estimé |
-|-----|:---:|:--------------:|:-------------:|:------------:|
-| **RTX 3060 12 GB** | 28 | 360 GB/s | 103 tok/s | **70 tok/s** ✅ |
-| RTX 3060 Ti | 38 | 448 GB/s | 128 tok/s | ~82 tok/s |
-| RTX 3070 | 46 | 448 GB/s | 128 tok/s | ~82 tok/s |
-| RTX 3070 Ti | 48 | 608 GB/s | 174 tok/s | ~101 tok/s |
-| RTX 3080 10 GB | 68 | 760 GB/s | 217 tok/s | ~115 tok/s |
-| RTX 3080 Ti | 80 | 912 GB/s | 261 tok/s | ~127 tok/s |
-| RTX 3090 | 82 | 936 GB/s | 267 tok/s | ~129 tok/s |
+| GPU | SMs | Bande passante | Plafond W4A16 | Ce runtime | llama.cpp (est.) |
+|-----|:---:|:--------------:|:-------------:|:----------:|:----------------:|
+| **RTX 3060 12 GB** | 28 | 360 GB/s | 103 tok/s | **70 tok/s** ✅ | 62.6 tok/s ✅ |
+| RTX 3060 Ti | 38 | 448 GB/s | 128 tok/s | ~82 tok/s | ~73 tok/s |
+| RTX 3070 | 46 | 448 GB/s | 128 tok/s | ~82 tok/s | ~73 tok/s |
+| RTX 3070 Ti | 48 | 608 GB/s | 174 tok/s | ~101 tok/s | ~89 tok/s |
+| RTX 3080 10 GB | 68 | 760 GB/s | 217 tok/s | ~115 tok/s | ~101 tok/s |
+| RTX 3080 Ti | 80 | 912 GB/s | 261 tok/s | ~127 tok/s | ~112 tok/s |
+| RTX 3090 | 82 | 936 GB/s | 267 tok/s | ~129 tok/s | ~113 tok/s |
 
 ## Méthodologie de mesure
 
@@ -664,17 +665,18 @@ Architecture: Ampere GA10x (sm_86). Minimum 8 GB VRAM.
 Estimates use the **85.3% DRAM efficiency** measured on RTX 3060 (307.2 GB/s
 effective). Two-component model: fixed overhead (3.68 ms) + weight time
 scaling with bandwidth. Recompile with the correct `-DNUM_BLOCKS` for your
-SM count.
+SM count. llama.cpp estimate uses the same method at **78% DRAM efficiency**
+(overhead 4.40 ms).
 
-| GPU | SMs | Bandwidth | W4A16 Ceiling | Est. tok/s |
-|-----|:---:|:---------:|:-------------:|:----------:|
-| **RTX 3060 12 GB** | 28 | 360 GB/s | 103 tok/s | **70 tok/s** ✅ |
-| RTX 3060 Ti | 38 | 448 GB/s | 128 tok/s | ~82 tok/s |
-| RTX 3070 | 46 | 448 GB/s | 128 tok/s | ~82 tok/s |
-| RTX 3070 Ti | 48 | 608 GB/s | 174 tok/s | ~101 tok/s |
-| RTX 3080 10 GB | 68 | 760 GB/s | 217 tok/s | ~115 tok/s |
-| RTX 3080 Ti | 80 | 912 GB/s | 261 tok/s | ~127 tok/s |
-| RTX 3090 | 82 | 936 GB/s | 267 tok/s | ~129 tok/s |
+| GPU | SMs | Bandwidth | W4A16 Ceiling | This runtime | llama.cpp (est.) |
+|-----|:---:|:---------:|:-------------:|:------------:|:----------------:|
+| **RTX 3060 12 GB** | 28 | 360 GB/s | 103 tok/s | **70 tok/s** ✅ | 62.6 tok/s ✅ |
+| RTX 3060 Ti | 38 | 448 GB/s | 128 tok/s | ~82 tok/s | ~73 tok/s |
+| RTX 3070 | 46 | 448 GB/s | 128 tok/s | ~82 tok/s | ~73 tok/s |
+| RTX 3070 Ti | 48 | 608 GB/s | 174 tok/s | ~101 tok/s | ~89 tok/s |
+| RTX 3080 10 GB | 68 | 760 GB/s | 217 tok/s | ~115 tok/s | ~101 tok/s |
+| RTX 3080 Ti | 80 | 912 GB/s | 261 tok/s | ~127 tok/s | ~112 tok/s |
+| RTX 3090 | 82 | 936 GB/s | 267 tok/s | ~129 tok/s | ~113 tok/s |
 
 ## Measurement Methodology
 
