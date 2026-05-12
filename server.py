@@ -9,7 +9,9 @@ import deepseek_r1_w4_model as m
 app = Flask(__name__)
 decoder = None
 
-WEIGHTS_FILE = "deepseek_r1_w4a16_bi.pt"
+WEIGHTS_FILE = "qwen2.5_coder_7b_w4a16_bi.pt"
+TOKENIZER_NAME = "Qwen/Qwen2.5-Coder-7B-Instruct"
+MODEL_DISPLAY_NAME = "Qwen 2.5 Coder 7B"
 
 
 def get_decoder():
@@ -21,7 +23,8 @@ def get_decoder():
                 "Lance d'abord : python deepseek_r1_w4_quantize.py\n"
                 "Puis : python reformat_weights_k_tiled.py --block-interleaved"
             )
-        decoder = m.Decoder(weights_file=WEIGHTS_FILE, verbose=False)
+        decoder = m.Decoder(weights_file=WEIGHTS_FILE, verbose=False,
+                          tokenizer_name=TOKENIZER_NAME)
     return decoder
 
 

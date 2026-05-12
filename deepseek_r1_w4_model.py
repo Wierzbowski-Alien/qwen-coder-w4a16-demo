@@ -53,10 +53,11 @@ def _load_ops():
             pass
 
 
-def load_weights(weights_file=WEIGHTS_FILE, verbose=True):
+def load_weights(weights_file=WEIGHTS_FILE, verbose=True,
+                 tokenizer_name="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"):
     """
     Load W4A16 quantized weights from disk.
-    Run deepseek_r1_w4_quantize.py first to create the file.
+    Supports both DeepSeek-R1 and Qwen2.5-Coder (same 7B architecture).
     """
     import os
     if not os.path.exists(weights_file):
@@ -72,8 +73,8 @@ def load_weights(weights_file=WEIGHTS_FILE, verbose=True):
 
     from transformers import AutoTokenizer
     if verbose:
-        print("Chargement tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-R1-Distill-Qwen-7B")
+        print(f"Chargement tokenizer: {tokenizer_name}...")
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
     return data, tokenizer
 
@@ -222,11 +223,13 @@ class Decoder:
                  pf_seq_len: int = MAX_SEQ_LEN,
                  kv_seq_len: int = MAX_SEQ_LEN,
                  vf_seq_len: int = 16,
-                 weight_format: str = None):
+                 weight_format: str = None,
+                 tokenizer_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"):
         _load_ops()
 
         if weights_data is None:
-            weights_data, tokenizer = load_weights(weights_file, verbose=verbose)
+            weights_data, tokenizer = load_weights(weights_file, verbose=verbose,
+                                                   tokenizer_name=tokenizer_name)
 
         # Auto-detect from weights metadata if not explicitly specified
         if weight_format is None:

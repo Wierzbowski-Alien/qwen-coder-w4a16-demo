@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DeepSeek-R1 W4A16 • Demo</title>
+<title>Qwen Coder W4A16 • Demo</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -129,7 +129,7 @@
 <body>
 <div class="container">
   <header>
-    <h1>DeepSeek-R1 <span style="color:#c9d1d9;">W4A16</span> <span class="badge">70.1 tok/s</span></h1>
+    <h1>Qwen 2.5 Coder <span style="color:#c9d1d9;">W4A16</span> <span class="badge">70.1 tok/s</span></h1>
     <div class="specs">
       <span>RTX 3060 12GB</span>
       <span>8.1 GB VRAM</span>
@@ -181,7 +181,7 @@ function addMessage(role, text) {
 
   const div = document.createElement('div');
   div.className = 'msg ' + role;
-  div.innerHTML = '<div class="msg-label">' + (role === 'user' ? 'Vous' : 'DeepSeek-R1') + '</div>'
+  div.innerHTML = '<div class="msg-label">' + (role === 'user' ? 'Vous' : 'Qwen Coder') + '</div>'
     + '<div class="msg-body">' + text + '</div>';
   chat.appendChild(div);
   scrollChat();
@@ -296,7 +296,7 @@ $('prompt').addEventListener('keydown', function(e) {
 // Show empty state on load
 (function() {
   const chat = $('chat');
-  chat.innerHTML = '<div class="empty"><p>DeepSeek-R1 W4A16 — 70.1 tok/s sur RTX 3060</p><p style="font-size:0.8rem">Ecrivez un message pour commencer.</p></div>';
+  chat.innerHTML = '<div class="empty"><p>Qwen Coder W4A16 — 70.1 tok/s sur RTX 3060</p><p style="font-size:0.8rem">Ecrivez un message pour commencer.</p></div>';
 })();
 </script>
 </body>
