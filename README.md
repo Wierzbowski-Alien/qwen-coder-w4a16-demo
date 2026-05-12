@@ -3,6 +3,8 @@
 > **One developer + Claude Code, DeepSeek-v4-pro & Gemini. The fastest Qwen 2.5 Coder on consumer hardware.**
 > *Un développeur + Claude Code, DeepSeek-v4-pro & Gemini. Le Qwen 2.5 Coder le plus rapide sur GPU grand public.*
 
+<a href="https://buymeacoffee.com/neuralnoise"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-neuralnoise-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" /></a>
+
 ---
 
 **🇫🇷 Français** · *English follows below*
