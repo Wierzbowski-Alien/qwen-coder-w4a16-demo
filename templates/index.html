@@ -244,14 +244,13 @@ async function doGenerate() {
 
         if (data.done) {
           tokenCount = data.tokens;
-          // Add stats
           const stats = streamingMsg.querySelector('.msg-stats');
           if (!stats) {
             const s = document.createElement('div');
             s.className = 'msg-stats visible';
-            s.innerHTML = '<span>Temps: <strong>' + data.time_s + ' s</strong></span>'
+            s.innerHTML = '<span>TTFT: <strong>' + data.ttft_ms + ' ms</strong></span>'
               + '<span>Tokens: <strong>' + data.tokens + '</strong></span>'
-              + '<span>Debit: <strong>' + data.tok_s + ' tok/s</strong></span>';
+              + '<span>Decode: <strong>' + data.decode_tok_s + ' tok/s</strong></span>';
             streamingMsg.appendChild(s);
           }
         } else {
