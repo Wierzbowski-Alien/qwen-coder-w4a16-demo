@@ -46,18 +46,20 @@ def stream():
     d = get_decoder()
 
     def generate():
-        t0 = time.perf_counter()
+        t0 = None  # start after prefill (first token)
         token_count = 0
         try:
             for text in d.generate_stream(prompt, max_tokens=max_tokens):
+                if t0 is None:
+                    t0 = time.perf_counter()  # decode-only timing
                 token_count += 1
                 yield f"data: {json.dumps({'text': text, 'n': token_count})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
             return
 
-        elapsed = time.perf_counter() - t0
-        yield f"data: {json.dumps({'done': True, 'time_s': round(elapsed, 2), 'tokens': token_count, 'tok_s': round(token_count / elapsed, 1) if elapsed > 0 else 0})}\n\n"
+        elapsed = time.perf_counter() - t0 if t0 else 0
+        yield f"data: {json.dumps({'done': True, 'time_s': round(elapsed, 2), 'tokens': token_count, 'tok_s': round((token_count - 1) / elapsed, 1) if elapsed > 0 else 0})}\n\n"
 
     return Response(generate(), mimetype="text/event-stream",
                     headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
