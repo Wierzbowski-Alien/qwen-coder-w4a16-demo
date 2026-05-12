@@ -1,4 +1,4 @@
-# Qwen 2.5 Coder W4A16 · RTX 3060 · 70.1 tok/s
+# Qwen 2.5 Coder W4A16 · RTX 3060 · 70.5 tok/s
 
 > **One developer + Claude Code, DeepSeek-v4-pro & Gemini. The fastest Qwen 2.5 Coder on consumer hardware.**
 > *Un développeur + Claude Code, DeepSeek-v4-pro & Gemini. Le Qwen 2.5 Coder le plus rapide sur GPU grand public.*
@@ -9,22 +9,22 @@
 
 ---
 
-## 🇫🇷 70.1 tok/s sur une RTX 3060 à 300 €
+## 🇫🇷 70.5 tok/s sur une RTX 3060 à 300 €
 
 En mai 2026, le meilleur moteur d'inférence LLM open source était
 **llama.cpp** (utilisé par Ollama), plafonnant à **62.6 tok/s** sur
 Qwen 2.5 Coder 7B.
 
-Ce dépôt atteint **70.1 tok/s** — **12.0% plus rapide** que le standard
+Ce dépôt atteint **70.5 tok/s** — **12.6% plus rapide** que le standard
 mondial de l'IA locale.
 
 ## Qui a été dépassé ?
 
-À 70.1 tok/s, voici les projets et entreprises que ce runtime surpasse :
+À 70.5 tok/s, voici les projets et entreprises que ce runtime surpasse :
 
 | Projet / Entreprise | Contexte | Performance relative |
 |---------------------|----------|---------------------|
-| **llama.cpp (Ollama)** | La référence mondiale, Georgi Gerganov + 800 contributeurs | **+12.0%** plus rapide |
+| **llama.cpp (Ollama)** | La référence mondiale, Georgi Gerganov + 800 contributeurs | **+12.6%** plus rapide |
 | **vLLM (UC Berkeley)** | Le moteur roi des serveurs LLM | ~2-3× plus rapide en batch=1 sur 3060 |
 | **NVIDIA TensorRT-LLM** | La bibliothèque officielle NVIDIA, optimisée pour H100 à 40k$ | Plus réactif sur GPU entrée de gamme |
 | **Mistral AI / Meta** | Implémentations de référence Python/PyTorch (Llama, Mistral) | **5-8× plus rapide** que le code natif |
@@ -63,14 +63,15 @@ par commits git. Le code source des kernels CUDA reste protégé.
 
 | Métrique | Valeur |
 |----------|--------|
-| **Débit** | **70.1 tok/s** (14.26 ms/token) |
-| **Amélioration** | +89% vs baseline (37.0 → 70.1 tok/s) |
-| **vs llama.cpp** | +12.0% (62.6 → 70.1 tok/s) |
+| **Débit** | **70.5 tok/s** (14.18 ms/token) |
+| **Amélioration** | +89% vs baseline (37.0 → 70.5 tok/s) |
+| **vs llama.cpp** | +12.6% (62.6 → 70.5 tok/s) |
 | **VRAM** | ~6.5 GB |
 | **Taille des poids** | 5.3 GB (INT4 block-interleaved) |
 
 Benchmark : 200 steps de décodage, GPU auto-boost 1972 MHz / 7301 MHz,
 RTX 3060 12 GB, CUDA 13.2, PyTorch 2.6. Best5 mean. Aucune triche de cache L2.
+→ [Résultat brut reproductible](BENCHMARK.txt) · `python bench_decode.py`
 
 ### Progression des optimisations
 
@@ -88,7 +89,7 @@ Le step de génération complet se décompose en deux phases :
 
 | Composante | Valeur | Note |
 |------------|--------|------|
-| **Temps total par token** | **14.26 ms** | 1000 / 70.1 |
+| **Temps total par token** | **14.18 ms** | 1000 / 70.1 |
 | Overhead fixe (attention, RMSNorm, lm_head) | 3.68 ms | Ne sollicite pas la DRAM |
 | **Temps kernels de poids (matvec, gate+up, residual)** | **10.58 ms** | 74% du step |
 | Volume de données lues | 3.25 GB | Modèle 7B en W4A16 |
@@ -104,7 +105,7 @@ compris llama.cpp — oscillent entre 70% et 78% d'efficacité DRAM.
 |--------|------:|----------|----------------|
 | PyTorch standard (FP16) | ~12 | 83 ms | < 15% |
 | Ollama / llama.cpp (Q4_K_M) | 62.6 | 15.9 ms | 78% |
-| **Ce runtime (W4A16)** | **70.1** | **14.26 ms** | **85.3%** |
+| **Ce runtime (W4A16)** | **70.1** | **14.18 ms** | **85.3%** |
 
 ### Le plafond : que reste-t-il ?
 
@@ -120,7 +121,7 @@ la précision des poids. Au-delà, il faudrait du W3A16 (2.5 GB,
 
 | Piste | Gain estimé | Résultat |
 |-------|------------|----------|
-| **Kernel K** — hoist sc + dual accum | +1-2% | ✅ **Adopté** — 70.1 tok/s officiel |
+| **Kernel K** — hoist sc + dual accum | +1-2% | ✅ **Adopté** — 70.5 tok/s officiel |
 | **EAGLE-2 speculative decoding** — tête 1 couche, 74.1% accuracy | 0.88× solo | ❌ **Dead end** — coût lm_head 3.08ms trop cher sur RTX 3060 |
 | **Dequant INT4→FP16 via PRMT** — LUT registres + bit-stuffing | +2-4 tok/s | ❌ **5.4× plus lent** que bfe.s32 |
 | **Layout scales+poids entrelacé** — co-localiser FP32 et INT4 | +1-3 tok/s | ❌ **3% plus lent** — scale déjà amorti 32× |
@@ -251,21 +252,21 @@ Je suis à l'écoute pour :
 
 ---
 
-## 🇬🇧 70.1 tok/s on a $300 RTX 3060
+## 🇬🇧 70.5 tok/s on a $300 RTX 3060
 
 In May 2026, the best open-source LLM inference engine was **llama.cpp**
 (used by Ollama), topping out at **62.6 tok/s** on Qwen 2.5 Coder 7B.
 
-This repo reaches **70.1 tok/s** — **12.0% faster** than the global
+This repo reaches **70.5 tok/s** — **12.6% faster** than the global
 standard for local AI.
 
 ## Who was beaten?
 
-At 70.1 tok/s, here's what this runtime surpasses:
+At 70.5 tok/s, here's what this runtime surpasses:
 
 | Project / Company | Context | Performance gap |
 |-------------------|---------|-----------------|
-| **llama.cpp (Ollama)** | Global standard, Georgi Gerganov + 800 contributors | **+12.0%** faster |
+| **llama.cpp (Ollama)** | Global standard, Georgi Gerganov + 800 contributors | **+12.6%** faster |
 | **vLLM (UC Berkeley)** | The king of LLM serving engines | ~2-3× faster at batch=1 on 3060 |
 | **NVIDIA TensorRT-LLM** | NVIDIA's official library, tuned for $40k H100s | More responsive on entry-level GPU |
 | **Mistral AI / Meta** | Reference PyTorch impls (Llama, Mistral) | **5-8× faster** than native code |
@@ -303,14 +304,15 @@ CUDA kernel source code remains protected.
 
 | Metric | Value |
 |--------|-------|
-| **Throughput** | **70.1 tok/s** (14.26 ms/token) |
-| **Improvement** | +89% over baseline (37.0 → 70.1 tok/s) |
-| **vs llama.cpp** | +12.0% (62.6 → 70.1 tok/s) |
+| **Throughput** | **70.5 tok/s** (14.18 ms/token) |
+| **Improvement** | +89% over baseline (37.0 → 70.5 tok/s) |
+| **vs llama.cpp** | +12.6% (62.6 → 70.5 tok/s) |
 | **VRAM** | ~6.5 GB |
 | **Weight file** | 5.3 GB (INT4 block-interleaved) |
 
 Benchmark: 200 decode steps, GPU auto-boost 1972 MHz / 7301 MHz,
 RTX 3060 12 GB, CUDA 13.2, PyTorch 2.6. Best5 mean. No L2 cache tricks.
+→ [Raw reproducible result](BENCHMARK.txt) · `python bench_decode.py`
 
 ### Optimization progression
 
@@ -328,7 +330,7 @@ Each generation step breaks down into two phases:
 
 | Component | Value | Note |
 |-----------|-------|------|
-| **Total time per token** | **14.26 ms** | 1000 / 70.1 |
+| **Total time per token** | **14.18 ms** | 1000 / 70.1 |
 | Fixed overhead (attention, RMSNorm, lm_head) | 3.68 ms | Minimal DRAM usage |
 | **Weight kernel time (matvec, gate+up, residual)** | **10.58 ms** | 74% of the step |
 | Data volume read | 3.25 GB | 7B model in W4A16 |
@@ -344,7 +346,7 @@ between 70% and 78% DRAM efficiency.
 |--------|------:|----------|----------------|
 | PyTorch standard (FP16) | ~12 | 83 ms | < 15% |
 | Ollama / llama.cpp (Q4_K_M) | 62.6 | 15.9 ms | 78% |
-| **This runtime (W4A16)** | **70.1** | **14.26 ms** | **85.3%** |
+| **This runtime (W4A16)** | **70.1** | **14.18 ms** | **85.3%** |
 
 ### The Ceiling: What's Left?
 
@@ -360,7 +362,7 @@ optimizations.
 
 | Track | Est. gain | Result |
 |-------|-----------|--------|
-| **Kernel K** — hoist sc + dual accum | +1-2% | ✅ **Adopted** — 70.1 tok/s official |
+| **Kernel K** — hoist sc + dual accum | +1-2% | ✅ **Adopted** — 70.5 tok/s official |
 | **EAGLE-2 speculative decoding** — 1-layer head, 74.1% accuracy | 0.88× solo | ❌ **Dead end** — lm_head cost 3.08ms too high on RTX 3060 |
 | **INT4→FP16 dequant via PRMT** — register LUT + bit-stuffing | +2-4 tok/s | ❌ **5.4× slower** than bfe.s32 |
 | **Interleaved scale+weight layout** — co-locate FP32 and INT4 | +1-3 tok/s | ❌ **3% slower** — scale already amortized 32× |
