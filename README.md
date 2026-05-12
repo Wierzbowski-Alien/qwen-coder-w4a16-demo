@@ -1,7 +1,7 @@
-# DeepSeek-R1 W4A16 · RTX 3060 · 70.1 tok/s
+# Qwen 2.5 Coder W4A16 · RTX 3060 · 70.1 tok/s
 
-> **One developer + Claude Code, DeepSeek-v4-pro & Gemini. The fastest DeepSeek-R1 on consumer hardware.**
-> *Un développeur + Claude Code, DeepSeek-v4-pro & Gemini. Le DeepSeek-R1 le plus rapide sur GPU grand public.*
+> **One developer + Claude Code, DeepSeek-v4-pro & Gemini. The fastest Qwen 2.5 Coder on consumer hardware.**
+> *Un développeur + Claude Code, DeepSeek-v4-pro & Gemini. Le Qwen 2.5 Coder le plus rapide sur GPU grand public.*
 
 ---
 
@@ -13,7 +13,7 @@
 
 En mai 2026, le meilleur moteur d'inférence LLM open source était
 **llama.cpp** (utilisé par Ollama), plafonnant à **62.6 tok/s** sur
-DeepSeek-R1 7B.
+Qwen 2.5 Coder 7B.
 
 Ce dépôt atteint **70.1 tok/s** — **12.0% plus rapide** que le standard
 mondial de l'IA locale.
@@ -40,12 +40,12 @@ a été sculpté pour un **circuit spécifique** : la RTX 3060 12 GB.
 - **Ce runtime** : 1 développeur, Claude Code, DeepSeek-v4-pro, Gemini, 3 optimisations en 48 heures
 
 Le résultat : un GPU à 300 € qui atteint la réactivité d'une station de
-travail professionnelle. **Le DeepSeek-R1 7B le plus rapide du monde sur
+travail professionnelle. **Le Qwen 2.5 Coder 7B le plus rapide du monde sur
 RTX 3060.**
 
 ## Ce que contient ce dépôt
 
-Un **runtime exécutable** pour faire tourner DeepSeek-R1 7B en INT4 sur
+Un **runtime exécutable** pour faire tourner Qwen 2.5 Coder 7B en INT4 sur
 RTX 3060 12 GB. Les optimisations sont décrites ci-dessous, horodatées
 par commits git. Le code source des kernels CUDA reste protégé.
 
@@ -198,10 +198,10 @@ Architecture : Ampere GA10x (sm_86). Minimum 8 GB VRAM.
 ## Installation
 
 ```bash
-git clone https://github.com/Wierzbowski-Alien/deepseek-r1-w4a16-demo
-cd deepseek-r1-w4a16-demo
+git clone https://github.com/Wierzbowski-Alien/qwen-coder-w4a16-demo
+cd qwen-coder-w4a16-demo
 # Téléchargez les poids et le runtime depuis :
-# https://github.com/Wierzbowski-Alien/deepseek-r1-w4a16-demo/releases
+# https://github.com/Wierzbowski-Alien/qwen-coder-w4a16-demo/releases
 bash setup.sh
 ```
 
@@ -209,14 +209,14 @@ Le script crée un environnement Python isolé, installe PyTorch et les
 dépendances, puis lance le serveur web sur **http://localhost:8080**.
 
 Les poids (5.3 GB) et le runtime compilé (14 MB) sont distribués via
-les [GitHub Releases](https://github.com/Wierzbowski-Alien/deepseek-r1-w4a16-demo/releases).
+les [GitHub Releases](https://github.com/Wierzbowski-Alien/qwen-coder-w4a16-demo/releases).
 Placez les deux fichiers à la racine avant de lancer `setup.sh`.
 
 ## Modèle
 
 | Caractéristique | Valeur |
 |-----------------|--------|
-| **Modèle** | DeepSeek-R1 (7B paramètres) |
+| **Modèle** | Qwen 2.5 Coder (7B paramètres) |
 | **Quantification** | INT4 poids + FP32 activations (W4A16) |
 | **Vocabulaire** | 129 280 tokens |
 | **Contexte max** | 4096 tokens |
@@ -254,7 +254,7 @@ Je suis à l'écoute pour :
 ## 🇬🇧 70.1 tok/s on a $300 RTX 3060
 
 In May 2026, the best open-source LLM inference engine was **llama.cpp**
-(used by Ollama), topping out at **62.6 tok/s** on DeepSeek-R1 7B.
+(used by Ollama), topping out at **62.6 tok/s** on Qwen 2.5 Coder 7B.
 
 This repo reaches **70.1 tok/s** — **12.0% faster** than the global
 standard for local AI.
@@ -281,11 +281,11 @@ runtime was sculpted for a **single circuit**: the RTX 3060 12 GB.
 - **This runtime**: 1 developer, Claude Code, DeepSeek-v4-pro, Gemini, 3 optimizations in 48 hours
 
 The result: a $300 GPU delivering workstation-class responsiveness.
-**The world's fastest DeepSeek-R1 7B on RTX 3060.**
+**The world's fastest Qwen 2.5 Coder 7B on RTX 3060.**
 
 ## What's in this repo
 
-An **executable runtime** to run DeepSeek-R1 7B in INT4 on an RTX 3060
+An **executable runtime** to run Qwen 2.5 Coder 7B in INT4 on an RTX 3060
 12 GB. Optimizations are described below, timestamped by git commits.
 CUDA kernel source code remains protected.
 
@@ -435,10 +435,10 @@ Architecture: Ampere GA10x (sm_86). Minimum 8 GB VRAM.
 ## Setup
 
 ```bash
-git clone https://github.com/Wierzbowski-Alien/deepseek-r1-w4a16-demo
-cd deepseek-r1-w4a16-demo
+git clone https://github.com/Wierzbowski-Alien/qwen-coder-w4a16-demo
+cd qwen-coder-w4a16-demo
 # Download weights and runtime from:
-# https://github.com/Wierzbowski-Alien/deepseek-r1-w4a16-demo/releases
+# https://github.com/Wierzbowski-Alien/qwen-coder-w4a16-demo/releases
 bash setup.sh
 ```
 
@@ -446,14 +446,14 @@ The script creates an isolated Python environment, installs PyTorch
 and dependencies, then starts the web server at **http://localhost:8080**.
 
 Model weights (5.3 GB) and the compiled runtime (14 MB) are distributed
-via [GitHub Releases](https://github.com/Wierzbowski-Alien/deepseek-r1-w4a16-demo/releases).
+via [GitHub Releases](https://github.com/Wierzbowski-Alien/qwen-coder-w4a16-demo/releases).
 Place both files at the repository root before running `setup.sh`.
 
 ## Model
 
 | Spec | Value |
 |------|-------|
-| **Model** | DeepSeek-R1 (7B parameters) |
+| **Model** | Qwen 2.5 Coder (7B parameters) |
 | **Quantization** | INT4 weights + FP32 activations (W4A16) |
 | **Vocabulary** | 129,280 tokens |
 | **Max context** | 4096 tokens |
