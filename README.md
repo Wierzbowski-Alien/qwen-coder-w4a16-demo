@@ -73,6 +73,24 @@ Benchmark : 200 steps de décodage, GPU auto-boost 1972 MHz / 7301 MHz,
 RTX 3060 12 GB, CUDA 13.2, PyTorch 2.6. Best5 mean. Aucune triche de cache L2.
 → [Résultat brut reproductible](BENCHMARK.txt) · `python bench_decode.py`
 
+### Le plafond physique
+
+Le décodage LLM est limité par la bande passante mémoire — pas par le calcul.
+Chaque token exige de lire **tous les poids** depuis la VRAM. Le plafond est
+donc dicté par la physique, pas par le code :
+
+```
+tok/s max  =  bande passante GPU (GB/s)  ÷  taille des poids (GB)
+
+RTX 3060 (360 GB/s) :
+  BF16  → 14 GB   →  26 tok/s max
+  W8A16 →  7 GB   →  51 tok/s max
+  W4A16 →  3.5 GB → 103 tok/s max   ← notre cible
+```
+
+Quantifier en 4-bit **quadruple le plafond**. La question devient : quelle
+fraction de ce plafond peut-on atteindre ? Nous sommes à **68%** (70.1 / 103).
+
 ### Progression des optimisations
 
 | Phase | Description | tok/s | Gain |
@@ -119,13 +137,60 @@ la précision des poids. Au-delà, il faudrait du W3A16 (2.5 GB,
 
 ## Pistes testées et verdict
 
-| Piste | Gain estimé | Résultat |
-|-------|------------|----------|
-| **Kernel K** — hoist sc + dual accum | +1-2% | ✅ **Adopté** — 70.5 tok/s officiel |
-| **EAGLE-2 speculative decoding** — tête 1 couche, 74.1% accuracy | 0.88× solo | ❌ **Dead end** — coût lm_head 3.08ms trop cher sur RTX 3060 |
-| **Dequant INT4→FP16 via PRMT** — LUT registres + bit-stuffing | +2-4 tok/s | ❌ **5.4× plus lent** que bfe.s32 |
-| **Layout scales+poids entrelacé** — co-localiser FP32 et INT4 | +1-3 tok/s | ❌ **3% plus lent** — scale déjà amorti 32× |
-| **Lookahead / Medusa / Self-speculation** — alternatives spec decode | variable | ❌ Tous sous solo decode sur RTX 3060 |
+Tout n'a pas marché. Voici les impasses — et ce qu'elles nous ont appris.
+
+### ❌ Dequant INT4→FP16 via PRMT — « l'instruction magique »
+
+**L'espoir :** remplacer 3 instructions par nibble (mask, shift, sign-extend)
+par une seule LUT en registres via `prmt.b32`. Gain espéré : +2-4 tok/s.
+
+**La réalité :** pour indexer la LUT, il faut un `switch()` sur la valeur du
+nibble. Le compilateur génère des branches conditionnelles → divergence de
+warp. Résultat : **5.4× plus lent** que la référence `bfe.s32`.
+
+**Leçon :** sur GPU, une instruction « magique » entourée de branches est
+toujours perdante face à 3 instructions simples sans branchement.
+
+### ❌ Layout scales+poids entrelacé — « deux loads en un »
+
+**L'espoir :** co-localiser les scales FP32 et les poids INT4 dans le même
+buffer pour fusionner deux transactions mémoire en une. Gain espéré : +1-3 tok/s.
+
+**La réalité :** le scale FP32 est déjà amorti sur 32 itérations de la boucle
+interne — son coût est négligeable. L'entrelacement ajoute de la complexité
+d'adressage sans réduire le volume de données. **−3%** par rapport à l'existant.
+
+**Leçon :** toujours mesurer le coût réel d'une opération avant de l'optimiser.
+Le scale représentait <0.5% du temps — on optimisait un non-problème.
+
+### ❌ EAGLE-2 speculative decoding — « 74.1% d'acceptation, 0% de gain »
+
+**L'espoir :** un draft head 1 couche qui prédit les tokens suivants, vérifiés
+par lot. La littérature rapporte 1.3-1.5× sur A100. On a entraîné une tête
+atteignant **74.1% d'acceptation** — mieux que les papiers publiés sur modèles
+comparables.
+
+**La réalité :** le verifier doit projeter chaque token candidat dans le
+vocabulaire (lm_head : 3584×152064). Sur RTX 3060, cette projection coûte
+**3.08 ms par appel**. Sur A100, la même opération coûte 0.55 ms. Le coût
+de vérification dépasse le gain du draft → **0.88× solo decode**.
+
+**Leçon :** un algorithme n'est pas indépendant du hardware. Le speculative
+decoding est structurellement non rentable sur GPU grand public pour les modèles
+7B+. Voir [`ETAT_PROJET.md`](ETAT_PROJET.md) pour l'analyse quantitative complète.
+
+### ❌ Lookahead / Medusa / Self-speculation
+
+Toutes les alternatives de décodage spéculatif testées tombent sous le décode
+solo sur RTX 3060. La combinaison « petit GPU + grand vocabulaire » tue
+systématiquement le bénéfice théorique de ces méthodes.
+
+### ✅ Kernel K — hoist sc + dual accum
+
+Le seul gain de la dernière passe qui a survécu au profiler. +1.2% (0.14 ms/token)
+obtenu en hissant la multiplication par le scale hors de la boucle interne et
+en exposant deux accumulateurs indépendants au dual-issue FP32 d'Ampere.
+Adopté comme standard — **70.5 tok/s officiel**.
 
 ## Prochain levier
 
@@ -195,6 +260,37 @@ Gain : **+1.2%** (0.14 ms, mesuré sur 200 steps).
 | A4000 / A5000 | 16-24 GB | Compatible |
 
 Architecture : Ampere GA10x (sm_86). Minimum 8 GB VRAM.
+
+### Performance projetée par GPU
+
+Estimations basées sur les 68% d'efficacité mesurés sur RTX 3060. Recompilation
+requise avec le bon `-DNUM_BLOCKS` pour le nombre de SM.
+
+| GPU | SMs | Bande passante | Plafond W4A16 | tok/s estimé |
+|-----|:---:|:--------------:|:-------------:|:------------:|
+| **RTX 3060 12 GB** | 28 | 360 GB/s | 103 tok/s | **70 tok/s** ✅ |
+| RTX 3060 Ti | 38 | 448 GB/s | 128 tok/s | ~87 tok/s |
+| RTX 3070 | 46 | 448 GB/s | 128 tok/s | ~87 tok/s |
+| RTX 3070 Ti | 48 | 608 GB/s | 174 tok/s | ~118 tok/s |
+| RTX 3080 10 GB | 68 | 760 GB/s | 217 tok/s | ~148 tok/s |
+| RTX 3080 Ti | 80 | 912 GB/s | 261 tok/s | ~178 tok/s |
+| RTX 3090 | 82 | 936 GB/s | 267 tok/s | ~182 tok/s |
+
+## Méthodologie de mesure
+
+Tous les chiffres publiés suivent le même protocole :
+
+- GPU en auto-boost (pas de lock d'horloge) confirmé via `nvidia-smi dmon`
+- 50 steps de warmup (stabilisation thermique et fréquence)
+- 200 steps de décodage chronométrés
+- Top-5 mean retenu comme chiffre officiel
+- Aucune triche de cache L2 (position pinned, pas de reuse artificiel)
+
+Reproductible à tout moment : `python bench_decode.py` → [BENCHMARK.txt](BENCHMARK.txt)
+
+> **La règle d'or : chiffre d'abord, code ensuite.** Chaque optimisation de ce
+> projet a été précédée d'un profil Nsight Compute identifiant le bottleneck
+> exact. Deviner coûte cher — sur les 7 pistes explorées, 5 étaient des impasses.
 
 ## Installation
 
@@ -314,6 +410,24 @@ Benchmark: 200 decode steps, GPU auto-boost 1972 MHz / 7301 MHz,
 RTX 3060 12 GB, CUDA 13.2, PyTorch 2.6. Best5 mean. No L2 cache tricks.
 → [Raw reproducible result](BENCHMARK.txt) · `python bench_decode.py`
 
+### The Physical Ceiling
+
+LLM decoding is memory-bandwidth-bound — not compute-bound. Every token
+requires reading **all model weights** from VRAM. The ceiling is set by
+physics, not code:
+
+```
+tok/s ceiling  =  GPU bandwidth (GB/s)  ÷  model weight size (GB)
+
+RTX 3060 (360 GB/s):
+  BF16  → 14 GB   →  26 tok/s max
+  W8A16 →  7 GB   →  51 tok/s max
+  W4A16 →  3.5 GB → 103 tok/s max   ← our target
+```
+
+Quantizing to 4-bit **quadruples the ceiling**. The question becomes: what
+fraction of that ceiling can you reach? We hit **68%** (70.1 / 103).
+
 ### Optimization progression
 
 | Phase | Description | tok/s | Gain |
@@ -360,13 +474,59 @@ optimizations.
 
 ## Tested & Verdict
 
-| Track | Est. gain | Result |
-|-------|-----------|--------|
-| **Kernel K** — hoist sc + dual accum | +1-2% | ✅ **Adopted** — 70.5 tok/s official |
-| **EAGLE-2 speculative decoding** — 1-layer head, 74.1% accuracy | 0.88× solo | ❌ **Dead end** — lm_head cost 3.08ms too high on RTX 3060 |
-| **INT4→FP16 dequant via PRMT** — register LUT + bit-stuffing | +2-4 tok/s | ❌ **5.4× slower** than bfe.s32 |
-| **Interleaved scale+weight layout** — co-locate FP32 and INT4 | +1-3 tok/s | ❌ **3% slower** — scale already amortized 32× |
-| **Lookahead / Medusa / Self-speculation** — alternative spec decode | variable | ❌ All below solo decode on RTX 3060 |
+Not everything worked. Here are the dead ends — and what they taught us.
+
+### ❌ INT4→FP16 dequant via PRMT — "the magic instruction"
+
+**The hope:** replace 3 instructions per nibble (mask, shift, sign-extend)
+with a single register-resident LUT via `prmt.b32`. Expected gain: +2-4 tok/s.
+
+**Reality:** indexing the LUT requires a `switch()` on the nibble value. The
+compiler generates conditional branches → warp divergence. Result: **5.4×
+slower** than the `bfe.s32` baseline.
+
+**Lesson:** on GPU, a "magic" instruction wrapped in branches always loses to
+3 simple branchless instructions.
+
+### ❌ Interleaved scale+weight layout — "two loads in one"
+
+**The hope:** co-locate FP32 scales and INT4 weights in the same buffer to
+fuse two memory transactions. Expected gain: +1-3 tok/s.
+
+**Reality:** the FP32 scale is already amortized over 32 inner-loop iterations
+— its cost is negligible. Interleaving adds addressing complexity without
+reducing data volume. **−3%** vs existing.
+
+**Lesson:** always measure the real cost before optimizing. The scale
+accounted for <0.5% of kernel time — we were optimizing a non-problem.
+
+### ❌ EAGLE-2 speculative decoding — "74.1% acceptance, 0% speedup"
+
+**The hope:** a 1-layer draft head predicting future tokens, verified in
+batch. The literature reports 1.3-1.5× on A100. We trained a head reaching
+**74.1% token acceptance** — better than published results on comparable models.
+
+**Reality:** the verifier must project each candidate token through the vocab
+(lm_head: 3584×152064). On RTX 3060, this costs **3.08 ms per call**. On
+A100, the same op costs 0.55 ms. The verification overhead exceeds the draft
+savings → **0.88× solo decode**.
+
+**Lesson:** algorithms are not hardware-independent. Speculative decoding is
+structurally unprofitable on consumer GPUs for 7B+ models. See
+[`ETAT_PROJET.md`](ETAT_PROJET.md) for the full quantitative analysis.
+
+### ❌ Lookahead / Medusa / Self-speculation
+
+Every alternative speculative decoding method tested falls below solo decode
+on RTX 3060. The "small GPU + large vocab" combination systematically kills
+the theoretical benefit.
+
+### ✅ Kernel K — hoist sc + dual accum
+
+The only last-pass gain that survived the profiler. +1.2% (0.14 ms/token)
+achieved by hoisting the scale multiplication out of the inner loop and
+exposing two independent accumulators to Ampere's dual-issue FP32 pipes.
+Adopted as standard — **70.5 tok/s official**.
 
 ## Next Lever
 
@@ -433,6 +593,37 @@ Gain: **+1.2%** (0.14 ms, measured over 200 steps).
 | A4000 / A5000 | 16-24 GB | Compatible |
 
 Architecture: Ampere GA10x (sm_86). Minimum 8 GB VRAM.
+
+### Expected Performance by GPU
+
+Estimates assume the same 68% end-to-end BW efficiency measured on RTX 3060.
+Recompile with the correct `-DNUM_BLOCKS` for your SM count.
+
+| GPU | SMs | Bandwidth | W4A16 Ceiling | Est. tok/s |
+|-----|:---:|:---------:|:-------------:|:----------:|
+| **RTX 3060 12 GB** | 28 | 360 GB/s | 103 tok/s | **70 tok/s** ✅ |
+| RTX 3060 Ti | 38 | 448 GB/s | 128 tok/s | ~87 tok/s |
+| RTX 3070 | 46 | 448 GB/s | 128 tok/s | ~87 tok/s |
+| RTX 3070 Ti | 48 | 608 GB/s | 174 tok/s | ~118 tok/s |
+| RTX 3080 10 GB | 68 | 760 GB/s | 217 tok/s | ~148 tok/s |
+| RTX 3080 Ti | 80 | 912 GB/s | 261 tok/s | ~178 tok/s |
+| RTX 3090 | 82 | 936 GB/s | 267 tok/s | ~182 tok/s |
+
+## Measurement Methodology
+
+All published numbers follow the same protocol:
+
+- GPU auto-boost (no clock lock), confirmed via `nvidia-smi dmon` during run
+- 50 warmup steps (thermal + frequency stabilization)
+- 200 timed decode steps
+- Top-5 mean reported as the official figure
+- No L2 cache tricks (position pinned, no artificial reuse)
+
+Reproducible anytime: `python bench_decode.py` → [BENCHMARK.txt](BENCHMARK.txt)
+
+> **The golden rule: measure first, code second.** Every optimization in this
+> project was preceded by a Nsight Compute profile identifying the exact
+> bottleneck. Guessing is expensive — out of 7 explored tracks, 5 were dead ends.
 
 ## Setup
 
