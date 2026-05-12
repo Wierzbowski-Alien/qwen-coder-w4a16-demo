@@ -220,7 +220,7 @@ Placez les deux fichiers à la racine avant de lancer `setup.sh`.
 | **Modèle** | Qwen 2.5 Coder (7B paramètres) |
 | **Quantification** | INT4 poids + FP32 activations (W4A16) |
 | **Vocabulaire** | 129 280 tokens |
-| **Contexte max** | 4096 tokens |
+| **Contexte max** | 4k / 8k / 16k tokens (configurable via l'interface) |
 | **Dimensions cachées** | 3584 |
 | **Couches** | 28 |
 | **Attention** | GQA — 16 têtes Q, 4 têtes KV |
@@ -458,7 +458,7 @@ Place both files at the repository root before running `setup.sh`.
 | **Model** | Qwen 2.5 Coder (7B parameters) |
 | **Quantization** | INT4 weights + FP32 activations (W4A16) |
 | **Vocabulary** | 129,280 tokens |
-| **Max context** | 4096 tokens |
+| **Max context** | 4k / 8k / 16k tokens (configurable via UI) |
 | **Hidden dims** | 3584 |
 | **Layers** | 28 |
 | **Attention** | GQA — 16 Q heads, 4 KV heads |

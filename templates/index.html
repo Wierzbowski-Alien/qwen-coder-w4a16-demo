@@ -109,6 +109,13 @@
     border: 1px solid #30363d;
   }
   .prompts button:hover { background: #30363d; color: #c9d1d9; }
+	  select {
+	    background: #0d1117; color: #c9d1d9;
+	    border: 1px solid #30363d; border-radius: 6px;
+	    padding: 0.35rem 0.5rem; font-size: 0.82rem;
+	    cursor: pointer; outline: none;
+	  }
+	  select:focus { border-color: #58a6ff; }
 
   /* Scrollbar */
   #chat::-webkit-scrollbar { width: 6px; }
@@ -132,7 +139,7 @@
     <h1>Qwen 2.5 Coder <span style="color:#c9d1d9;">W4A16</span> <span class="badge">70.5 tok/s</span></h1>
     <div class="specs">
       <span>RTX 3060 12GB</span>
-      <span>8.1 GB VRAM</span>
+      <span id="ctxBadge">Contexte: {{ context_length }}</span>
       <span>7B INT4</span>
       <span>CUDA custom</span>
     </div>
@@ -151,9 +158,15 @@
       <button onclick="setPrompt('The meaning of life is')">Philo</button>
     </div>
     <div class="row">
-      <label for="tokens">Tokens :</label>
+      <label for="tokens">Max tokens :</label>
       <input type="range" id="tokens" min="10" max="500" value="120" step="10" oninput="$('tokLabel').textContent=this.value">
       <span id="tokLabel">120</span>
+      <label for="ctxSelect" style="margin-left:0.5rem">Contexte :</label>
+      <select id="ctxSelect" onchange="setContext(this.value)">
+        <option value="4096" {% if context_length == 4096 %}selected{% endif %}>4k</option>
+        <option value="8192" {% if context_length == 8192 %}selected{% endif %}>8k</option>
+        <option value="16384" {% if context_length == 16384 %}selected{% endif %}>16k</option>
+      </select>
       <button id="btnSend" onclick="doGenerate()">Generer</button>
       <button id="btnStop" onclick="stopGeneration()">Stop</button>
     </div>
@@ -278,6 +291,35 @@ async function doGenerate() {
   $('btnStop').classList.remove('visible');
   abortCtrl = null;
   streamingMsg = null;
+}
+
+async function setContext(value) {
+  if (!confirm('Changer le contexte a ' + (value/1024) + 'k redemarre le serveur. Continuer ?')) {
+    // Revert the select to current value
+    const res = await fetch('/context');
+    const data = await res.json();
+    $('ctxSelect').value = data.context_length;
+    return;
+  }
+  try {
+    const res = await fetch('/set_context/' + value, {method: 'POST'});
+    const data = await res.json();
+    if (data.status === 'ok') {
+      // Wait for server restart then reload
+      let attempts = 0;
+      const check = setInterval(async () => {
+        try {
+          const r = await fetch('/health');
+          if (r.ok) { clearInterval(check); location.reload(); }
+        } catch(e) {}
+        if (++attempts > 30) { clearInterval(check); location.reload(); }
+      }, 1000);
+    } else {
+      alert('Erreur: ' + data.error);
+    }
+  } catch(e) {
+    alert('Erreur: ' + e.message);
+  }
 }
 
 function stopGeneration() {

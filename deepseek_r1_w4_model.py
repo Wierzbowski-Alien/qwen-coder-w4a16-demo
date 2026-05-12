@@ -719,8 +719,9 @@ class Decoder:
             if think_id != self.tokenizer.unk_token_id:
                 ids = ids + [think_id]
 
-        if len(ids) >= MAX_SEQ_LEN - max_tokens:
-            ids = ids[-(MAX_SEQ_LEN - max_tokens - 1):]
+        seq_len = self._kv_seq_len
+        if len(ids) >= seq_len - max_tokens:
+            ids = ids[-(seq_len - max_tokens - 1):]
 
         if len(ids) > 1:
             next_id = self.prefill(ids)
@@ -770,8 +771,9 @@ class Decoder:
             if think_id != self.tokenizer.unk_token_id:
                 ids = ids + [think_id]
 
-        if len(ids) >= MAX_SEQ_LEN - max_tokens:
-            ids = ids[-(MAX_SEQ_LEN - max_tokens - 1):]
+        seq_len = self._kv_seq_len
+        if len(ids) >= seq_len - max_tokens:
+            ids = ids[-(seq_len - max_tokens - 1):]
 
         if len(ids) > 1:
             next_id = self.prefill(ids)

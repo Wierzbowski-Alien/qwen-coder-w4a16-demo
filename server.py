@@ -1,5 +1,5 @@
-"""DeepSeek-R1 W4A16 — demo web interactive with SSE streaming."""
-import sys, os, time, json
+"""Qwen 2.5 Coder W4A16 — demo web interactive with SSE streaming."""
+import sys, os, time, json, argparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from flask import Flask, request, jsonify, Response, render_template
@@ -8,10 +8,13 @@ import deepseek_r1_w4_model as m
 
 app = Flask(__name__)
 decoder = None
+current_context = 4096
 
 WEIGHTS_FILE = "qwen2.5_coder_7b_w4a16_bi.pt"
 TOKENIZER_NAME = "Qwen/Qwen2.5-Coder-7B-Instruct"
 MODEL_DISPLAY_NAME = "Qwen 2.5 Coder 7B"
+
+VALID_CONTEXTS = {4096, 8192, 16384}
 
 
 def get_decoder():
@@ -24,13 +27,40 @@ def get_decoder():
                 "Puis : python reformat_weights_k_tiled.py --block-interleaved"
             )
         decoder = m.Decoder(weights_file=WEIGHTS_FILE, verbose=False,
-                          tokenizer_name=TOKENIZER_NAME)
+                          tokenizer_name=TOKENIZER_NAME,
+                          pf_seq_len=current_context,
+                          kv_seq_len=current_context)
     return decoder
 
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", context_length=current_context)
+
+
+@app.route("/context")
+def get_context():
+    return jsonify({"context_length": current_context})
+
+
+@app.route("/set_context/<int:value>", methods=["POST"])
+def set_context(value):
+    global current_context
+    if value not in VALID_CONTEXTS:
+        return jsonify({"error": f"Contexte invalide: {value}. Valide: {sorted(VALID_CONTEXTS)}"}), 400
+    current_context = value
+    # Schedule restart after returning the response
+    def restart():
+        import subprocess
+        time.sleep(0.5)
+        script = os.path.abspath(__file__)
+        subprocess.Popen([sys.executable, script, "--context", str(value)],
+                        stdout=sys.stdout, stderr=sys.stderr,
+                        start_new_session=True)
+        os._exit(0)
+    import threading
+    threading.Thread(target=restart, daemon=True).start()
+    return jsonify({"status": "ok", "context_length": value, "message": "Redemarrage..."})
 
 
 @app.route("/stream", methods=["POST"])
@@ -79,9 +109,20 @@ def health():
 
 
 if __name__ == "__main__":
-    print("Chargement du modele...")
+    parser = argparse.ArgumentParser(description="Qwen Coder W4A16 Demo Server")
+    parser.add_argument("--context", type=int, default=4096,
+                       choices=[4096, 8192, 16384],
+                       help="Longueur de contexte maximale (defaut: 4096)")
+    parser.add_argument("--port", type=int, default=8080,
+                       help="Port HTTP (defaut: 8080)")
+    args = parser.parse_args()
+
+    current_context = args.context
+
+    print(f"Chargement du modele (contexte: {current_context} tokens)...")
+    print(f"KV cache: ~{current_context * 28 * 4 * 128 * 2 * 2 / 1e9:.1f} GB")
     get_decoder()
     print(f"Modele pret. GPU: {torch.cuda.get_device_name(0)}")
     print(f"VRAM utilisee: {torch.cuda.memory_allocated()/1e9:.1f} GB")
-    print("\nServeur demarre → http://localhost:8080")
-    app.run(host="0.0.0.0", port=8080, debug=False)
+    print(f"\nServeur demarre → http://localhost:{args.port}")
+    app.run(host="0.0.0.0", port=args.port, debug=False)
