@@ -299,6 +299,9 @@ class Decoder:
         self._out_token          = torch.empty(1,              **i32)
         self._nc_params          = torch.zeros(2,               **i32)  # {token_id, position}
 
+        # Cap prefill buffers at 4k — they're only used for batch prefill (non-K-tiled).
+        # K-tiled path uses step-by-step decode regardless. 16k prefill would need ~2.2 GB.
+        pf_seq_len = min(pf_seq_len, 4096)
         PF_S = pf_seq_len
         self._pf_seq_len = PF_S
         self._pf_hidden    = torch.empty(PF_S, HIDDEN_SIZE,       **bf16)
@@ -466,6 +469,12 @@ class Decoder:
             self._position = 0
             for tid in token_ids:
                 self.step_nc(tid)
+            return self._out_token.item()
+        # Fall back to step-by-step if prompt exceeds prefill buffer capacity
+        if len(token_ids) > self._pf_seq_len:
+            self._position = 0
+            for tid in token_ids:
+                self.step(tid)
             return self._out_token.item()
         ids = torch.tensor(token_ids, dtype=torch.int32, device="cuda")
         _prefill(
