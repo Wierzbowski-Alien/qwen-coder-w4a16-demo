@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# DeepSeek-R1 W4A16 INT4 — Runtime Setup
+# Qwen 2.5 Coder W4A16 INT4 — Runtime Setup
 # Usage: bash setup.sh
 # Before running: download the weight file and compiled runtime from
-# https://github.com/Wierzbowski-Alien/deepseek-r1-w4a16-demo/releases
+# https://github.com/Wierzbowski-Alien/qwen-coder-w4a16-demo/releases
 set -e
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -16,56 +16,59 @@ warn()  { echo -e "${YELLOW}[~]${NC} $1"; }
 
 echo ""
 echo "=============================================="
-echo " DeepSeek-R1 W4A16 INT4 — Setup"
+echo " Qwen 2.5 Coder W4A16 INT4 — Setup"
 echo " $(date)"
 echo " Dossier : $ROOT"
 echo "=============================================="
 echo ""
 
 # --- Check GPU ---
-info "Vérification GPU..."
+info "Verification GPU..."
 if ! command -v nvidia-smi &>/dev/null; then
     err "nvidia-smi introuvable. Une carte NVIDIA est requise."
     exit 1
 fi
 GPU=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)
 VRAM=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader 2>/dev/null | head -1)
-ok "GPU détecté : $GPU ($VRAM)"
+ok "GPU detecte : $GPU ($VRAM)"
 
 # --- Check for required binary files ---
-REPO_URL="https://github.com/Wierzbowski-Alien/deepseek-r1-w4a16-demo"
+REPO_URL="https://github.com/Wierzbowski-Alien/qwen-coder-w4a16-demo"
 RELEASES_URL="$REPO_URL/releases"
+
+WEIGHTS_FILE="qwen2.5_coder_7b_w4a16_bi.pt"
+SO_PREFIX="deepseek_r1_w4a16_C"
 
 MISSING=""
 
-# --- Poids du modèle (5.3 GB, split en 3 parties dans les Releases) ---
-if [ ! -f "$ROOT/deepseek_r1_w4a16_bi.pt" ]; then
-    PART1="$ROOT/deepseek_r1_w4a16_bi.pt.partaa"
-    PART2="$ROOT/deepseek_r1_w4a16_bi.pt.partab"
-    PART3="$ROOT/deepseek_r1_w4a16_bi.pt.partac"
+# --- Poids du modele (5.3 GB, split en 3 parties dans les Releases) ---
+if [ ! -f "$ROOT/$WEIGHTS_FILE" ]; then
+    PART1="$ROOT/${WEIGHTS_FILE}.partaa"
+    PART2="$ROOT/${WEIGHTS_FILE}.partab"
+    PART3="$ROOT/${WEIGHTS_FILE}.partac"
     if [ -f "$PART1" ] && [ -f "$PART2" ] && [ -f "$PART3" ]; then
-        info "Réassemblage des poids depuis les 3 parties..."
-        cat "$PART1" "$PART2" "$PART3" > "$ROOT/deepseek_r1_w4a16_bi.pt"
-        ok "Poids réassemblés (5.3 GB)"
+        info "Reassemblage des poids depuis les 3 parties..."
+        cat "$PART1" "$PART2" "$PART3" > "$ROOT/$WEIGHTS_FILE"
+        ok "Poids reassembles (5.3 GB)"
         info "Suppression des parties..."
         rm "$PART1" "$PART2" "$PART3"
-        ok "Parties supprimées — vous pouvez les garder pour redistribuer"
+        ok "Parties supprimees — vous pouvez les garder pour redistribuer"
     else
-        MISSING="$MISSING  - deepseek_r1_w4a16_bi.pt.partaa (1.9 GB)\n"
-        MISSING="$MISSING  - deepseek_r1_w4a16_bi.pt.partab (1.9 GB)\n"
-        MISSING="$MISSING  - deepseek_r1_w4a16_bi.pt.partac (1.6 GB)\n"
+        MISSING="$MISSING  - ${WEIGHTS_FILE}.partaa (2.0 GB)\n"
+        MISSING="$MISSING  - ${WEIGHTS_FILE}.partab (2.0 GB)\n"
+        MISSING="$MISSING  - ${WEIGHTS_FILE}.partac (1.4 GB)\n"
     fi
 fi
-if [ -f "$ROOT/deepseek_r1_w4a16_bi.pt" ]; then
-    ok "Poids du modèle trouvés (5.3 GB)"
+if [ -f "$ROOT/$WEIGHTS_FILE" ]; then
+    ok "Poids du modele trouves (5.3 GB)"
 fi
 
-# --- Runtime CUDA compilé (14 MB) ---
-SO_FILE=$(ls "$ROOT"/deepseek_r1_w4a16_C*.so 2>/dev/null | head -1)
+# --- Runtime CUDA compile (15 MB) ---
+SO_FILE=$(ls "$ROOT"/${SO_PREFIX}*.so 2>/dev/null | head -1)
 if [ -z "$SO_FILE" ]; then
-    MISSING="$MISSING  - deepseek_r1_w4a16_C.*.so (14 MB, runtime CUDA compilé)\n"
+    MISSING="$MISSING  - ${SO_PREFIX}.*.so (15 MB, runtime CUDA compile)\n"
 else
-    ok "Runtime CUDA trouvé ($(basename "$SO_FILE"))"
+    ok "Runtime CUDA trouve ($(basename "$SO_FILE"))"
 fi
 
 if [ -n "$MISSING" ]; then
