@@ -344,6 +344,61 @@ Je suis à l'écoute pour :
 - **Sponsoring** — soutenez le développement d'optimisations pour GPU grand public
 - **Questions** sur les résultats publiés
 
+## Conclusion : Au-delà de l'optimisation, la maîtrise du Silicium
+
+Atteindre 70,5 tok/s sur une RTX 3060 pour un modèle de 7B (W4A16) n'est plus
+une simple question de code ; c'est le résultat d'une lutte acharnée contre la
+physique du bus mémoire GA106. À ce niveau de performance, j'ai atteint environ
+**85,3 % d'efficacité DRAM réelle**, un chiffre qui place ce moteur d'inférence
+au-dessus des standards industriels actuels comme llama.cpp ou vLLM pour ce
+matériel spécifique.
+
+### La Roadmap de Finition (W4A16)
+
+Le potentiel du format W4A16 a été pressé jusqu'à ses dernières limites. Les
+prochaines étapes de « polissage » visent désormais à compresser l'overhead
+fixe pour grappiller les dernières millisecondes :
+
+1. **Fusion `final_norm` + `lm_head_int8`** : En intégrant le RMSNorm directement
+   en prologue du kernel de sortie, j'élimine un cycle d'écriture/lecture en DRAM
+   et la latence de synchronisation inter-kernel. Gain projeté : ~0,3 ms (+1,5 tok/s).
+
+2. **Optimisation de la Réduction** : L'implémentation d'`atomicAdd` (résolue en
+   cache L2 sur Ampere) pour supprimer les 168 kernels de réduction résiduels.
+   Gain projeté : ~0,2 ms (+1,1 tok/s).
+
+3. **L2 Cache Management** : Application chirurgicale des indices d'éviction
+   (`L2::evict_first`) sur les flux de poids pour sanctuariser le KV-cache et les
+   activations dans les 3 Mo de cache L2.
+
+### La Vision « NVIDIA » : Les 5 % restants
+
+Si une équipe d'ingénieurs de chez NVIDIA devait pousser ce projet encore plus
+loin, le travail ne porterait plus sur l'algorithme, mais sur la
+micro-architecture non documentée du GPU :
+
+- **SASS Hand-tuning** : Réordonnancer manuellement les instructions en
+  assembleur pur (SASS) pour éliminer les Register Bank Conflicts et maximiser
+  l'IPC.
+
+- **Détournement des Tensor Cores** : Utiliser les instructions `mma.sync` pour
+  la déquantification et l'accumulation, libérant ainsi les coeurs CUDA (ALU)
+  pour les calculs d'indexation.
+
+- **Synchronisation asynchrone native** : Remplacer les barrières classiques par
+  des objets `mbarrier` matériels propres à l'architecture Ampere, permettant aux
+  warps de s'affranchir des attentes de blocs.
+
+- **Zero-Sync Loop** : Implémenter l'intégralité de la boucle d'inférence
+  (sampling inclus) côté GPU pour éliminer toute latence de communication PCIe
+  avec le CPU.
+
+Ce projet démontre qu'avec une analyse rigoureuse (Loi de Little, profiling NCU)
+et une spécialisation totale pour une architecture donnée, un développeur peut
+surpasser les implémentations généralistes conçues par des équipes entières.
+Ce n'est pas la carte qui est devenue plus puissante, c'est le logiciel qui a
+appris à respecter le silicium.
+
 ---
 
 **🇬🇧 English**
@@ -678,3 +733,53 @@ I'm open to:
 - **Research collaborations** — quantization, speculative decoding
 - **Sponsorship** — support optimization development for consumer GPUs
 - **Questions** about the published results
+
+## Conclusion: Beyond Optimization, Mastering the Silicon
+
+Reaching 70.5 tok/s on an RTX 3060 for a 7B model (W4A16) is no longer just a
+matter of code; it's the result of a relentless fight against the physics of the
+GA106 memory bus. At this performance level, I've reached approximately
+**85.3% real DRAM efficiency**, a figure that places this inference engine above
+current industry standards like llama.cpp or vLLM for this specific hardware.
+
+### The W4A16 Finishing Roadmap
+
+The W4A16 format has been pushed to its absolute limits. The remaining polishing
+steps aim to compress the fixed overhead and claw back the last milliseconds:
+
+1. **`final_norm` + `lm_head_int8` fusion**: By embedding RMSNorm directly in the
+   output kernel prologue, I eliminate a DRAM write/read cycle and inter-kernel
+   synchronization latency. Projected gain: ~0.3 ms (+1.5 tok/s).
+
+2. **Reduction Optimization**: Implementing `atomicAdd` (resolved in L2 cache on
+   Ampere) to eliminate the 168 residual reduction kernels. Projected gain:
+   ~0.2 ms (+1.1 tok/s).
+
+3. **L2 Cache Management**: Surgical application of eviction hints
+   (`L2::evict_first`) on weight streams to sanctuary the KV-cache and
+   activations within the 3 MB of L2 cache.
+
+### The "NVIDIA" Vision: The Remaining 5%
+
+If an NVIDIA engineering team were to push this project further, the work would
+no longer be about the algorithm, but about the GPU's undocumented
+micro-architecture:
+
+- **SASS Hand-tuning**: Manually reordering instructions in pure assembly (SASS)
+  to eliminate Register Bank Conflicts and maximize IPC.
+
+- **Tensor Core Hijacking**: Using `mma.sync` instructions for dequantization and
+  accumulation, freeing the CUDA cores (ALU) for indexing computations.
+
+- **Native Asynchronous Synchronization**: Replacing classic barriers with
+  hardware `mbarrier` objects native to the Ampere architecture, allowing warps
+  to break free from block-level waiting.
+
+- **Zero-Sync Loop**: Implementing the entire inference loop (sampling included)
+  GPU-side to eliminate all PCIe communication latency with the CPU.
+
+This project demonstrates that with rigorous analysis (Little's Law, NCU
+profiling) and total specialization for a given architecture, a single developer
+can surpass generalist implementations built by entire teams.
+The graphics card didn't get faster — the software learned to respect the
+silicon.
