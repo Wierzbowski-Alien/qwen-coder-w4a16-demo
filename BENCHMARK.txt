@@ -1,35 +1,35 @@
 Qwen 2.5 Coder W4A16 — Decode Benchmark
 ============================================================
 
-Date:    2026-05-11
-GPU:     NVIDIA GeForce RTX 3060 (12 GB)
-Driver:  Linux, CUDA 13.2, PyTorch 2.6
-Weights: qwen2.5_coder_7b_w4a16_bi.pt (5.3 GB, INT4 block-interleaved)
-Kernel:  Kernel K (hoist sc + dual accumulators)
+Date:      2026-05-11 21:36 UTC
+GPU:       NVIDIA GeForce RTX 3060 (12 GB)
+Kernel:    deepseek_r1_w4a16_C (Kernel K — hoist sc + dual accum)
+Weights:   qwen2.5_coder_7b_w4a16_bi.pt (5.3 GB, INT4 block-interleaved)
+Tokenizer: Qwen/Qwen2.5-Coder-7B-Instruct
 
 Methodology:
-  10 warmup steps, then 5 runs of 200 pure decode steps each.
-  Position reset between each step (no KV cache growth).
-  GPU auto-boost (no -lgc lock). Best-of-5 reported.
+  10 warmup decode steps, then 5 runs of 200 pure decode steps each.
+  Position pinned (no KV cache growth). GPU auto-boost, no clock lock.
+  torch.cuda.synchronize() before/after timing block.
 
 Results:
-  Run 1: 2.825s = 70.8 tok/s (14.12 ms/token)
-  Run 2: 2.831s = 70.6 tok/s (14.16 ms/token)
-  Run 3: 2.828s = 70.7 tok/s (14.14 ms/token)
+  Run 1: 2.828s = 70.7 tok/s (14.14 ms/token)
+  Run 2: 2.835s = 70.5 tok/s (14.18 ms/token)
+  Run 3: 2.836s = 70.5 tok/s (14.18 ms/token)
   Run 4: 2.836s = 70.5 tok/s (14.18 ms/token)
-  Run 5: 2.833s = 70.6 tok/s (14.16 ms/token)
-
-  Mean (5 runs): 70.7 tok/s  (14.15 ms/token)
-  Best of 5:     70.8 tok/s
-  VRAM used:     5.9 GB
+  Run 5: 2.850s = 70.2 tok/s (14.25 ms/token)
+  -------------------------------------------
+  Mean (5 runs):  70.5 tok/s  (14.18 ms/token)
+  Best of 5:      70.7 tok/s
+  VRAM:           5.9 GB
 
 Comparison:
-  Ollama / llama.cpp (Q4_K_M):  62.6 tok/s
-  This runtime (W4A16):         70.7 tok/s  →  +12.9% faster
+  Ollama / llama.cpp (Q4_K_M, same GPU):  62.6 tok/s
+  This runtime (W4A16):                    70.5 tok/s → +12.6% faster
 
 Reproduce:
+  git clone https://github.com/Wierzbowski-Alien/qwen-coder-w4a16-demo
+  cd qwen-coder-w4a16-demo
+  # Download weights and .so from Releases
+  bash setup.sh
   python bench_decode.py
-
-Verification:
-  nvidia-smi dmon -s pucm -c 1
-  (GPU clock ~1972 MHz core / 7301 MHz memory during decode)
