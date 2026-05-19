@@ -795,3 +795,42 @@ profiling) and total specialization for a given architecture, a single developer
 can surpass generalist implementations built by entire teams.
 The graphics card didn't get faster — the software learned to respect the
 silicon.
+
+---
+
+## En développement — Qwen2.5-Coder-7B-W4A16-BI-NF4-GPTQ-EAGLE
+
+Le projet évolue au-delà du W4A16 INT4. La stack actuelle en développement
+pousse chaque couche du pipeline :
+
+```
+Qwen2.5-Coder-7B-W4A16-BI-NF4-GPTQ-EAGLE-GA106-Native
+                      │     │  │   │    │     │
+                      │     │  │   │    │     └─ Hardware-Software Co-Design
+                      │     │  │   │    └─ Décodage spéculatif EAGLE
+                      │     │  │   └─ Quantification Hessian-optimale
+                      │     │  └─ Grille non-uniforme NormalFloat4 (QLoRA)
+                      │     └─ Layout Block-Interleaved (coalescence 100%)
+                      └─ Précision standard industrie
+```
+
+### Ce qui est opérationnel (code + benchmarks)
+
+| Composant | Fichier | Résultat |
+|-----------|---------|----------|
+| **BI layout** | `reformat_bi.py` | +36% TPS vs row-major, 100% coalescence L1 |
+| **NF4-GPTQ** | `quantize_w4a16_gptq.py` | PPL 9.96 (vs 10.17 RTN), +0.7% HumanEval |
+| **EAGLE draft head** | `eagle_engine.py` | α offline 75.84%, α online 61.9% (après KV fix) |
+| **CUDA Graphs** | `deepseek_r1_w4_model.py` | Zéro overhead lancement kernel |
+| **5 modèles** | `Plateforme/inference.py` | Qwen-7B, Mistral-7B, Falcon3-3B, Qwen-3B |
+
+### Ce qui est en cours
+
+- **EAGLE Phase 2** — kernel `launch_verify_nf4()` : batch verify K+1 tokens en
+  parallèle, cible ~58 TPS en NF4 (+19% vs solo)
+- **GPU Sampling** — suppression du round-trip CPU pour les logits/softmax/multinomial
+- **Article technique** — format MLSys Claim→Code→Preuve, 10 sections, toutes
+  les optimisations documentées avec leur code source et benchmark
+
+Article complet : [ARTICLE_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ARTICLE_PROJET.md)
+Journal de développement : [ETAT_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ETAT_PROJET.md) (75+ sections)
