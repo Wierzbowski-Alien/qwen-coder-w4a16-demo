@@ -441,8 +441,6 @@ Qwen2.5-Coder-7B-W4A16-BI-NF4-GPTQ-EAGLE-GA106-Native
 - **Article technique** — format MLSys Claim→Code→Preuve, 10 sections, toutes
   les optimisations documentées avec leur code source et benchmark
 
-Article complet : [ARTICLE_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ARTICLE_PROJET.md)
-Journal de développement : [ETAT_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ETAT_PROJET.md) (75+ sections)
 
 ---
 
@@ -871,5 +869,3 @@ Qwen2.5-Coder-7B-W4A16-BI-NF4-GPTQ-EAGLE-GA106-Native
 - **Technical article** — MLSys Claim→Code→Proof format, 10 sections, all
   optimizations documented with source code and benchmarks
 
-Full article: [ARTICLE_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ARTICLE_PROJET.md)
-Development journal: [ETAT_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ETAT_PROJET.md) (75+ sections)
