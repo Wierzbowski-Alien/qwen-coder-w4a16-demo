@@ -407,6 +407,45 @@ appris à respecter le silicium.
 
 ---
 
+## En développement — Qwen2.5-Coder-7B-W4A16-BI-NF4-GPTQ-EAGLE
+
+Le projet évolue au-delà du W4A16 INT4. La stack actuelle en développement
+pousse chaque couche du pipeline :
+
+```
+Qwen2.5-Coder-7B-W4A16-BI-NF4-GPTQ-EAGLE-GA106-Native
+                      │     │  │   │    │     │
+                      │     │  │   │    │     └─ Hardware-Software Co-Design
+                      │     │  │   │    └─ Décodage spéculatif EAGLE
+                      │     │  │   └─ Quantification Hessian-optimale
+                      │     │  └─ Grille non-uniforme NormalFloat4 (QLoRA)
+                      │     └─ Layout Block-Interleaved (coalescence 100%)
+                      └─ Précision standard industrie
+```
+
+### Ce qui est opérationnel (code + benchmarks)
+
+| Composant | Fichier | Résultat |
+|-----------|---------|----------|
+| **BI layout** | `reformat_bi.py` | +36% TPS vs row-major, 100% coalescence L1 |
+| **NF4-GPTQ** | `quantize_w4a16_gptq.py` | PPL 9.96 (vs 10.17 RTN), +0.7% HumanEval |
+| **EAGLE draft head** | `eagle_engine.py` | α offline 75.84%, α online 61.9% (après KV fix) |
+| **CUDA Graphs** | `deepseek_r1_w4_model.py` | Zéro overhead lancement kernel |
+| **5 modèles** | `Plateforme/inference.py` | Qwen-7B, Mistral-7B, Falcon3-3B, Qwen-3B |
+
+### Ce qui est en cours
+
+- **EAGLE Phase 2** — kernel `launch_verify_nf4()` : batch verify K+1 tokens en
+  parallèle, cible ~58 TPS en NF4 (+19% vs solo)
+- **GPU Sampling** — suppression du round-trip CPU pour les logits/softmax/multinomial
+- **Article technique** — format MLSys Claim→Code→Preuve, 10 sections, toutes
+  les optimisations documentées avec leur code source et benchmark
+
+Article complet : [ARTICLE_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ARTICLE_PROJET.md)
+Journal de développement : [ETAT_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ETAT_PROJET.md) (75+ sections)
+
+---
+
 **🇬🇧 English**
 
 ---
@@ -798,39 +837,39 @@ silicon.
 
 ---
 
-## En développement — Qwen2.5-Coder-7B-W4A16-BI-NF4-GPTQ-EAGLE
+## In Development — Qwen2.5-Coder-7B-W4A16-BI-NF4-GPTQ-EAGLE
 
-Le projet évolue au-delà du W4A16 INT4. La stack actuelle en développement
-pousse chaque couche du pipeline :
+The project is evolving beyond W4A16 INT4. The current development stack pushes
+every layer of the pipeline:
 
 ```
 Qwen2.5-Coder-7B-W4A16-BI-NF4-GPTQ-EAGLE-GA106-Native
                       │     │  │   │    │     │
                       │     │  │   │    │     └─ Hardware-Software Co-Design
-                      │     │  │   │    └─ Décodage spéculatif EAGLE
-                      │     │  │   └─ Quantification Hessian-optimale
-                      │     │  └─ Grille non-uniforme NormalFloat4 (QLoRA)
-                      │     └─ Layout Block-Interleaved (coalescence 100%)
-                      └─ Précision standard industrie
+                      │     │  │   │    └─ EAGLE Speculative Decoding
+                      │     │  │   └─ Hessian-Optimal Quantization
+                      │     │  └─ NormalFloat4 Non-Uniform Grid (QLoRA)
+                      │     └─ Block-Interleaved Layout (100% coalescing)
+                      └─ Industry-Standard Precision
 ```
 
-### Ce qui est opérationnel (code + benchmarks)
+### What's operational (code + benchmarks)
 
-| Composant | Fichier | Résultat |
-|-----------|---------|----------|
-| **BI layout** | `reformat_bi.py` | +36% TPS vs row-major, 100% coalescence L1 |
+| Component | File | Result |
+|-----------|------|--------|
+| **BI layout** | `reformat_bi.py` | +36% TPS vs row-major, 100% L1 coalescing |
 | **NF4-GPTQ** | `quantize_w4a16_gptq.py` | PPL 9.96 (vs 10.17 RTN), +0.7% HumanEval |
-| **EAGLE draft head** | `eagle_engine.py` | α offline 75.84%, α online 61.9% (après KV fix) |
-| **CUDA Graphs** | `deepseek_r1_w4_model.py` | Zéro overhead lancement kernel |
-| **5 modèles** | `Plateforme/inference.py` | Qwen-7B, Mistral-7B, Falcon3-3B, Qwen-3B |
+| **EAGLE draft head** | `eagle_engine.py` | α offline 75.84%, α online 61.9% (after KV fix) |
+| **CUDA Graphs** | `deepseek_r1_w4_model.py` | Zero kernel launch overhead |
+| **5 models** | `Plateforme/inference.py` | Qwen-7B, Mistral-7B, Falcon3-3B, Qwen-3B |
 
-### Ce qui est en cours
+### In progress
 
-- **EAGLE Phase 2** — kernel `launch_verify_nf4()` : batch verify K+1 tokens en
-  parallèle, cible ~58 TPS en NF4 (+19% vs solo)
-- **GPU Sampling** — suppression du round-trip CPU pour les logits/softmax/multinomial
-- **Article technique** — format MLSys Claim→Code→Preuve, 10 sections, toutes
-  les optimisations documentées avec leur code source et benchmark
+- **EAGLE Phase 2** — `launch_verify_nf4()` kernel: batch verify K+1 tokens in
+  parallel, target ~58 TPS in NF4 (+19% vs solo)
+- **GPU Sampling** — eliminating the CPU round-trip for logits/softmax/multinomial
+- **Technical article** — MLSys Claim→Code→Proof format, 10 sections, all
+  optimizations documented with source code and benchmarks
 
-Article complet : [ARTICLE_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ARTICLE_PROJET.md)
-Journal de développement : [ETAT_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ETAT_PROJET.md) (75+ sections)
+Full article: [ARTICLE_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ARTICLE_PROJET.md)
+Development journal: [ETAT_PROJET.md](https://github.com/Luce-Org/lucebox-hub/blob/feat/qwen25-coder-spec/megakernel/ETAT_PROJET.md) (75+ sections)
